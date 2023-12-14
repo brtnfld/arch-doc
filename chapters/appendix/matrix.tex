@@ -1,0 +1,119 @@
+\todo[inline]{Owner: Dana -- Priority: High -- Effort: M -- Completion: 5\%}
+
+\section{Operating Systems}
+
+\subsection{Windows}
+\begin{itemize}
+    \item SWMR should work on Windows with local file systems (NOT SMB shares), though testing is not a robust as on MacOS/Linux
+    \item Parallel HDF5 is poorly tested on Windows
+    \item The direct VFD is not supported as it uses the POSIX \texttt{O\_DIRECT} flag
+    \item Thread-safety uses win32 threads
+    \item Some API calls use \texttt{off\_t}, which is 32-bits on Windows (we use \texttt{\_\_int64} internally)
+    \item Unicode file paths are not well-supported
+\end{itemize}
+
+\section{Build Systems}
+
+All features should be supported in both the Autotools and CMake.
+
+\section{Feature Compatibility}
+
+Only incompatibilities are noted (an empty cell implies compatibility).
+
+\begin{minipage}{\textwidth}
+  \begin{center}
+    \begin{tabular}{|| c | c | c | c ||}
+      \hline
+      Feature & Serial & SWMR (serial) & Parallel \\
+      \hline
+      Paged Allocation & ? & ? & ? \\
+      \hline
+      Free-space tracking & ? & ? & ?\\
+      \hline
+      VDS & ? & ? & ? \\
+      \hline
+      Variable-length datatypes & ? & ? & ? \\
+      \hline
+    \end{tabular}
+  \end{center}
+\end{minipage}
+
+\section{Other Miscellaneous Limitations}
+\begin{itemize}
+    \item The current implementation of virtual datasets doesn't support point selections
+    \item The direct VFD requires \texttt{open(2)} to take the \texttt{O\_DIRECT} flag
+\end{itemize}
+
+%\begin{minipage}{\textwidth}
+%  \begin{center}
+%    \begin{tabular}{|| c | c | c | c | c | c ||}
+%      \hline
+%      & SWMR & Paged Allocation & Free-space tracking & VDS & Non-fixed-size datatypes \\
+%      \hline
+%      SWMR & S & S? & S? & S & $\times$ \\
+%      \hline
+%      Paged Allocation & & P\footnote{No page buffering?} & P? & P? & S \\
+%      \hline
+%      Free-space tracking & & & P? & P? & S \\
+%      \hline
+%      VDS & & & & P & S \\
+%      \hline
+%      Non-fixed-size datatypes & & & & &  S \\
+%      \hline
+%    \end{tabular}
+%  \end{center}
+%\end{minipage}
+
+%\paragraph{Symbology}
+%\todo[inline]{GH: Is this a good way of breaking it down?}
+%\begin{itemize}
+%    \item S - sequential only
+%    \item P - MPI parallel \& sequential
+%    \item $\times$ - unsupported
+%\end{itemize}
+
+%\paragraph{Other}
+%\begin{itemize}
+%    \item The current implementation of virtual datasets doesn't support point selections
+%\end{itemize}
+
+% Other row/column candidates
+% - VDS
+% - Paged allocation/page buffering
+% - ???
+
+% Wrappers/High-level*
+%Parallel vs. \\ Serial & Thread-Safe vs. \\ Not Thread-Safe & Windows/MacOS/ \\ Linux/Misc. POSIX \\
+% https://stackoverflow.com/questions/2888817/footnotes-for-tables-in-latex for footnotes in table
+% SWMR doesn't support variable-length and region reference datatypes
+
+% Collective metadata writes aren't supported with page buffering, separate table probably(?)
+% Page buffering doesn't support parallel HDF5
+
+% Free space mangement
+
+% ROS3 VFD -> 
+% Lots of missing documentation
+
+% Direct VFD
+
+% Core, Direct, Onion, Family, Log, MPIO, Multi, Sec2, Splitter, Mirror, etc VFDs? 
+
+% Metadata cache?
+
+% 
+
+\paragraph{VFD stackability and features}
+\begin{center}
+    \begin{tabular}{|| c | c ||}
+      \hline
+      \rotatebox{90}{Pass-Through} & family, mirror, multi/split, onion, splitter, subfiling \\
+      \hline
+      \rotatebox{90}{Terminal} & core, direct, HDFS, Hermes, log, MPI-I/O, sec2, ros3, stdio\\
+      \hline
+    \end{tabular}
+  \end{center}
+
+NOTE: The onion and subfiling VFDs are currently hard-coded to use the sec2 VFD.
+
+\paragraph{VOL connector stackability}

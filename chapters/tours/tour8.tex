@@ -1,0 +1,149 @@
+
+%|  Name  | TODO | ONGOING | DONE |
+%|--------|------|---------|------|
+%| Dana   | x    |         |      |
+%| Gerd   |      |         | x    |
+%| Glenn  | x    |         |      |
+%| Jordan | x    |         |      |
+%| Luke   | x    |         |      |
+%| Matt   |      |         | x    |
+%| Neil   | x    |         |      |
+%| Scot   | x    |         |  x    |
+
+%\todo[inline]{Owner: Gerd -- Priority: High -- Effort: M -- Completion: 100\%}
+
+% \subsection{Asynchronous I/O API}
+
+% In this section, we describe how applications use asynchronous I/O in HDF5 using async versions of HDF5 routines, as well as the event set (H5ES) routines. Finally, we describe how these things are implemented in the HDF5 library.
+
+% \subsection{Asynchronous I/O in VOL connectors}
+
+% In this section, we describe how VOL connector authors enable asynchronous I/O using the VOL interface. We review existing VOL connectors that support asynchronous I/O, and we also discuss how this is handled by the HDF5 library.
+
+In listing~\ref{lst:pthreads-ex-parallel}, a simple application is shown that uses three threads to create three datasets (one per thread) in an HDF5 file. The order in which the datasets are created is ``randomized" by calls to \texttt{sleep} function with a random input inside the \texttt{create\_dataset} function. Except for the presence of the \texttt{H5TS} package and Pthreads library calls, the Callgrind profile is indistinguishable from what we have seen in other tours. This seamlessness is achieved by ``sleight of hand" and expectation management: The library provides a thread-safe implementation but not a full-blown multi-thread concurrent implementation. Essentially, four elements can achieve this:
+\begin{itemize}
+    \item A modified global library initialization variable
+    \item A global thread initialization variable
+    \item A global key for per-thread error stacks
+    \item A global structure and key for thread cancellation prevention.
+\end{itemize}
+
+For a sample run, in the Callgrind profile, only seven \texttt{H5TS} APIs appear (call counts in parentheses). The first three are infrastructure:
+\begin{itemize}
+    \item \texttt{H5TS\_pthread\_first\_thread\_init} (1)
+    \item \texttt{H5TS\_tid\_init} (1)
+    \item \texttt{H5TS\_key\_destructor} (9).
+\end{itemize}
+The remaining four represent the steady state:
+\begin{itemize}
+    \item \texttt{H5TS\_mutex\_[lock,unlock]} (90 each)
+    \item \texttt{H5TS\_cancel\_count\_[inc,dec]} (89 each).
+\end{itemize}
+
+To explain this behavior, in section~\ref{sec:H5TS-impl}, we review the thread-safety related changes to \texttt{H5private.h} and core functions of the \texttt{H5TS} package.
+
+\begin{listing}
+\centering
+\caption{A multithreaded application using POSIX threads (Pthreads).}
+\label{lst:pthreads-ex-parallel}
+\begin{minted}[linenos]{C}
+#include "common.h"
+
+struct targs {
+    unsigned count;
+    hid_t file;
+};
+
+void* create_dataset(void* args)
+{
+    struct targs* ptr = (struct targs*)args;
+    printf("Hello from the new thread! %d\n", ptr->count);
+    sleep(rand() % 2);
+    hid_t fspace = H5Screate_simple(1, (hsize_t[]){10*(ptr->count+1)},
+        NULL);
+    char name[10];
+    snprintf(name, 10, "dataset%d", ptr->count);
+    hid_t dataset = H5Dcreate(ptr->file, name, H5T_NATIVE_INT,
+        fspace, H5P_DEFAULTx3);
+    H5Dclose(dataset);
+    H5Sclose(fspace);
+    return NULL;
+}
+
+int main() {
+    hid_t file = H5Fcreate("mt.h5", H5F_ACC_TRUNC, H5P_DEFAULTx2);
+
+    pthread_t t1, t2, t3;
+
+    struct targs batch[3] = {{1, file}, {2, file}, {3, file}};
+
+    pthread_create(&t1, NULL, (void*)create_dataset, (void*)&batch[0]);
+    pthread_create(&t2, NULL, (void*)create_dataset, (void*)&batch[1]);
+    pthread_create(&t3, NULL, (void*)create_dataset, (void*)&batch[2]);
+
+    pthread_join(t1, NULL);
+    pthread_join(t2, NULL);
+    pthread_join(t3, NULL);
+
+    H5Fclose(file);
+    return 0;
+}
+\end{minted}
+\end{listing}
+
+\subsection{The implementation of thread-safety in the HDF5 library}\label{sec:H5TS-impl}
+
+On UNIX-like systems, the implementation uses POSIX threads; Windows threads are used under Windows. Note that we use Pthreads in the examples for illustration.
+
+A good, albeit slightly outdated, overview of the thread-safety implementation can be found in~\cite{libhdf5-ts}.
+
+The HDF5 library must be built with the \texttt{--enable-threadsafe} option for multithreaded applications to behave correctly. 
+This defines the \texttt{H5\_HAVE\_THREADSAFE} macro, modifying library global infrastructure in \texttt{H5private.h}. The most notable changes are the following:
+
+\begin{listing}
+\centering
+\caption{Modified global library initialization variable.}
+\label{lst:pthreads-init}
+\begin{minted}[linenos]{C}
+typedef struct H5_api_struct {
+    H5TS_mutex_t init_lock;
+    bool         H5_libinit_g;
+    bool         H5_libterm_g;
+} H5_api_t;
+\end{minted}
+\end{listing}
+
+\begin{enumerate}
+    \item The global variables \texttt{H5\_lib[init,term]\_g} were replaced by a struct and protected by a mutex, see listing~\ref{lst:pthreads-init}.
+    \item The global variable \texttt{H5TS\_first\_init\_g} of type \texttt{pthread\_once\_t} is used to allow only the first thread in the application process to call an initialization function using \texttt{pthread\_once}. Any thread's subsequent calls to \texttt{pthread\_once} are disregarded. The call sets up the mutex in the global structure \texttt{H5\_g} via an initialization function \texttt{H5TS\_pthread\_first\_thread\_init}.
+    \item A global thread-managed key \texttt{H5TS\_errstk\_key\_g} is used to allow pthreads to maintain a separate error stack (of type \texttt{H5E\_t}) for each thread.
+    \item To prevent thread cancellations from killing a thread while it is in the library, we maintain per-thread information about the cancellability status of the thread before it enters the library so that we can restore that same status when the thread leaves the library. The status is preserved using a structure (of type \texttt{H5TS\_cancel\_t}) which maintains the cancellability state of the thread before it entered the library and a count (which works very much like the recursive lock counter) that keeps track of the number of API calls the thread makes within the library. For details, see \texttt{H5TS.c}.
+    \item The \texttt{FUNC\_ENTER} and \texttt{FUNC\_LEAVE} macros were modified as shown in listing~\ref{lst:pthreads-funky} to (un-)lock the (re-)store the thread cancellation status.
+\end{enumerate}
+
+
+\begin{listing}
+\centering
+\caption{Modified \texttt{FUNC\_[ENTER,LEAVE]} macros in \texttt{H5private.h}.}
+\label{lst:pthreads-funky}
+\begin{minted}[linenos]{C}
+
+#define FUNC_ENTER_API_THREADSAFE \                            
+    H5_FIRST_THREAD_INIT          \
+    H5_API_UNSET_CANCEL           \
+    H5_API_LOCK
+
+#define FUNC_LEAVE_API_THREADSAFE  \
+    H5_API_UNLOCK                  \
+    H5_API_SET_CANCEL
+
+\end{minted}
+\end{listing}
+
+% \subsection{Concurrent threadsafety vs asynchronous I/O: a discussion}
+
+% In many cases, asynchronous I/O in HDF5 could be used to give much of the benefit of fully concurrent multithreading without needing a major rewrite of the entire library. Here, we discuss the benefits and drawbacks of each approach and when one would be beneficial vs the other.
+
+\subsection{Summary}
+
+At the time of this writing, the HDF5 library provides ``only" a thread-safe implementation but not a full-blown multi-thread concurrent implementation. Given this narrower scope, this is achieved at a low cost and low implementation complexity.

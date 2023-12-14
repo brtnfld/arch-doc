@@ -1,0 +1,47 @@
+
+%|  Name  | TODO | ONGOING | DONE |
+%|--------|------|---------|------|
+%| Dana   | x    |         |      |
+%| Gerd   | x    |         |      |
+%| Glenn  | x    |         |      |
+%| Jordan | x    |         |      |
+%| Luke   | x    |         |      |
+%| Matt   | x    |         |      |
+%| Neil   | x    |         |      |
+%| Scot   | x    |         |      |
+
+
+\todo[inline]{Owner: Neil -- Priority: Medium -- Effort: M -- Completion: 0\%}
+
+What problems are there with the current architecture?
+
+\section{C-API Issues}
+
+\begin{itemize}
+    \item Inadequate error reporting mechanisms
+    \begin{itemize}
+        \item Usually just -1, \texttt{FAIL}, or \texttt{H5I\_INVALID\_HID} (no fine-grained error codes)
+        \item Parsing error stacks is complicated and doesn't work well due to inconsistent major/minor error values
+    \end{itemize}
+\end{itemize}
+
+\section{VOL Issues}
+
+\begin{itemize}
+    \item Limited VOL capability introspection
+\end{itemize}
+
+\section{Non-VOL (Infrastructure) Issues}
+
+\begin{itemize}
+    \item Entanglement with the native VOL
+    \item Multi-threading
+\end{itemize}
+
+\section{Native VOL Issues}
+
+\begin{itemize}
+    \item Obscure defaults/lack of configurability
+    \item Poor encapsulation (generally only at the package level)
+    \item Lots of small I/O operations maps poorly to high-performance I/O systems
+\end{itemize}

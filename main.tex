@@ -1,0 +1,148 @@
+\documentclass[letterpaper,hyper]{HDF}
+
+% Extra packages
+
+%\usepackage{multirow}
+
+% Disable some cases of annoying word-continuation hyphenation
+%\usepackage[none]{hyphenat}
+
+% Allow non-justified text in some table cells
+%\usepackage{ragged2e}
+
+% TikZ
+%\usepackage{tikz}
+%\usepackage{gnuplot-lua-tikz}
+%\usetikzlibrary{calc, patterns, shapes, positioning,arrows,
+%  decorations.pathmorphing, decorations.pathreplacing, decorations.text,
+%  math, trees, shadows, spy}
+
+% Code snippets
+%\newcommand{\mintcinline}[1]{\mintinline[fontsize=\small, breaklines=true]{C}{#1}}
+
+%\usepackage{graphicx} % Required for inserting images
+
+\usepackage{todonotes}
+\usepackage{dirtytalk}
+\usepackage{biblatex}
+\usepackage{pdflscape}
+\usepackage{tablefootnote}
+\usepackage{tabularx}
+\usepackage{morewrites}
+
+\addbibresource{reference.bib}
+
+\title{An Overview of the HDF5 Library Architecture}
+\author{The HDF Group}
+\date{\today}
+\organization{HDF}
+\orglogo{HDF_LOGO}
+\rfcversion{v2}
+
+
+% Revision History
+\input{support/revisions}
+
+% Glossary terms, for use in the main document
+\input{support/glossary}
+
+% Index of terms, included in table of contents
+\makeindex[intoc]
+
+\begin{document}
+
+\maketitle
+
+% Abstract
+\subfile{sections/abstract}
+% Housekeeping
+%CLEANUP \listoftodos
+
+% Display revision history
+\makerevisions
+
+% Table of Contents & List of Figures
+\tableofcontents
+\listoffigures
+\listoflistings
+\counterwithin{listing}{chapter}
+
+% Glossaries of acronyms and terms
+\newpage
+\glsdisablehyper
+\printglossary[type=\acronymtype]
+\printglossary
+
+% Main text of the document
+\include{chapters/introduction/intro}
+
+\chapter{Guided Tours}\label{part:tours}
+\input{chapters/tours/intro}
+
+\section{Meet the HDF5 library}\label{chap:hdf5-lib}
+\input{chapters/tours/tour1}
+
+\section{The life cycle of HDF5 files}\label{sec:tour2}
+\input{chapters/tours/tour2}
+
+\section{What is the HDF5 library doing to my data?}\label{sec:tour3}
+\input{chapters/tours/tour3}
+
+\section{The H Stands for Hierarchical}\label{chap:groups-and-links}
+\input{chapters/tours/tour4}
+
+\section{Stoked on datatypes}\label{sec:tour5}
+\input{chapters/tours/tour5}
+
+\section{Getting down and dirty with caches}\label{sec:tour6}
+\input{chapters/tours/tour6}
+
+%\section{\textit{Are} PARALLEL \textit{you} HDF5 \textit{good} WITH \textit{at} MPI %\textit{multitasking?}}\label{sec:tour7}
+%\include{chapters/tours/tour7}
+
+\section{Multithreading}\label{sec:tour8}
+\include{chapters/tours/tour8}
+
+\chapter{Architectural Overview}\label{chap:arch}
+\include{chapters/architecture/overview}
+\section{Architectural Problems}\label{sec:problems}
+\include{chapters/architecture/problems}
+
+\chapter{Reference}\label{part:reference}
+
+\section{Modules}
+\input{chapters/reference/modules}
+
+\section{Performance considerations}
+\input{chapters/reference/performance}
+
+\section{HDF5 Library Extensions}
+\input{chapters/reference/extensions}
+
+%CLEANUP\section{Parallel HDF5}
+%CLEANUP\include{chapters/reference/parallel}
+
+%CLEANUP \chapter*{Epilogue}
+%CLEANUP \include{sections/epilogue}
+
+\appendix
+
+\chapter{Packages}\label{app:conventions}
+\input{chapters/appendix/h5prefixes}
+
+\chapter{Feature chronology}\label{app:chronology}
+\input{chapters/appendix/chronology}
+
+\chapter{Feature (in-)compatibility matrix}\label{app:feat-compat}
+\include{chapters/appendix/matrix}
+
+
+%CLEANUP\chapter{Environment}\label{app:environment}
+%CLEANUP\include{chapters/appendix/setup}
+
+%\chapter{Stories}\label{app:stories}
+%\include{chapters/appendix/stories}
+
+\printbibliography
+
+\end{document}

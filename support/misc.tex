@@ -1,0 +1,7 @@
+
+It is not easy to mentally map HDF5 API calls to actual IO activity. This is the case for three reasons:
+\begin{enumerate}
+    \item The HDF5 library is an intermediate abstraction layer
+    \item The goal of serializing collections of objects into files
+    \item IO activity occurs in blocks.
+\end{enumerate}

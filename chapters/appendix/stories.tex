@@ -1,0 +1,47 @@
+\subsection{Handles and property management}\label{sec:handles}
+
+Most application developers experience the HDF5 library through handles (identifiers) and property lists. In this section, we present the essentials of how these primitives are managed internally in the library.
+
+\begin{itemize}
+    \item Identifier types and management
+    \item Identifier life cycle
+    \item VOL use of identifiers
+    \item User-defined identifier types
+\end{itemize}
+
+\subsection{Property management}\label{sec:properties}
+
+\begin{itemize}
+    \item Property lists, property list classes, default properties, inheritance
+    \item User-defined props.
+\end{itemize}
+
+
+\subsection{Library state}\label{sec:lib-state}
+
+\todo{Neil will take care of this. Scot for Fortran-specific considerations?}
+
+In this section, we describe the \textit{cross-cutting} infrastructure the library maintains for efficient operation, including certain global variables, API context, free lists, etc.
+
+\begin{itemize}
+    \item Default context, global data xfer property list cache
+    \item ???
+\end{itemize}
+
+\subsection{Extension interfaces}
+
+\todo{Jordan is the man.}
+
+One of the values of HDF5 library development is extensibility. In this section, describe the architecture of four important extension interfaces, including the virtual object layer (VOL), filter plugins, and user-defined identifiers and links. The emphasis of this section is not on the development of such extensions, but on how they connect and integrate with library internals.
+
+\begin{itemize}
+    \item VOL connectors
+    \item VFL plugins
+    \item Filter plugins
+    \item User-defined links
+    \item User-defined datatype conversions
+    \item Custom memory management (?)
+    \item Iterator callbacks (?)
+\end{itemize}
+
+Other important extension interfaces are covered below, including the virtual file layer (VFL) in section~\ref{sec:vfl} and datatype conversions in section~\ref{sec:dtype-conv}.

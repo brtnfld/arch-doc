@@ -1,0 +1,77 @@
+
+%|  Name  | TODO | ONGOING | DONE |
+%|--------|------|---------|------|
+%| Dana   | x    |         |      |
+%| Gerd   | x    |         |      |
+%| Glenn  | x    |         |      |
+%| Jordan | x    |         |      |
+%| Luke   | x    |         |      |
+%| Matt   |      | x       |      |
+%| Neil   | x    |         |      |
+%| Scot   | x    |         |      |
+
+\makeglossaries
+
+% Glossary terms 
+
+\newglossaryentry{VFL}
+{
+        name=Virtual File Layer (VFL),
+        description={A logical layer in the HDF5 library responsible for isolating the
+                     library's operations from the underlying storage mechanism
+                     (filesystem, e.g.).}
+}
+
+\newglossaryentry{VFD}
+{
+        name=Virtual File Driver (VFD),
+        description={An implementation of a Virtual File Driver "class" – a structure
+                     containing function pointers and other data required for Virtual File
+                     operations.}
+}
+ 
+\newglossaryentry{tVFD}
+{
+        name=Terminal VFD,
+        description={VFD which performs operations on storage and does not support
+                     any child VFD as part of its own operation.}
+}
+
+\newglossaryentry{pVFD}
+{
+        name=Passthrough VFD,
+        description={VFD which redirects operations to other “child” VFDs.}
+}
+
+\newglossaryentry{cVFD}
+{
+        name=Child VFD,
+        description={VFD which receives direction from a “passthrough” VFD, rather
+                     than from the HDF5 library directly.}
+}
+
+\newglossaryentry{hdf5_plugin}
+{
+        name=Plugin,
+        description={Binary code which can be loaded and utilized at runtime. Extant
+                     HDF5 examples include filter and VOL connector plugins.}
+}
+
+\newglossaryentry{VOL}
+{
+        name=Virtual Object Layer (VOL),
+        description={An extension layer in the HDF5 library\ldots}
+}
+
+% Glossary acronyms 
+\newacronym{hdf5}{HDF5}{Hierarchical Data Format, v5}
+
+\newacronym{rfc}{RFC}{Request for Comments}
+
+\newacronym{rm}{RM}{HDF5 Library API Reference Manual}
+
+\newacronym{ug}{UG}{HDF5 Library User Guide}
+
+\newacronym{fsm}{FSM}{Free Space Manager}
+
+\newacronym[longplural={Ends of Address}]{eoa}{EOA}{End of Address}

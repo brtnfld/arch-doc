@@ -1,0 +1,59 @@
+
+%|  Name  | TODO | ONGOING | DONE |
+%|--------|------|---------|------|
+%| Dana   | x    |         |      |
+%| Gerd   | x    |         |      |
+%| Glenn  | x    |         |      |
+%| Jordan | x    |         |      |
+%| Luke   | x    |         |      |
+%| Matt   | x    |         |      |
+%| Neil   | x    |         |      |
+%| Scot   | x    |         |      |
+
+\todo[inline]{Owner: Gerd -- Priority: High -- Effort: M -- Completion: 10\%}
+
+Multiple parallel data access paths have the potential to increase user data transfer to and from HDF5 files. In this section, we describe the HDF5 library infrastructure capable of harnessing MPI-based parallelism while preserving the HDF5 library API and file format.
+
+\begin{listing}
+\centering
+\caption{File -- MPI-parallel.}
+\label{lst:file-mpi-parallel}
+\begin{minted}[linenos]{C}
+#include "common.h"
+int main(int argc, char **argv) {
+    MPI_Init(&argc, &argv);
+    hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
+    hid_t file = H5Fcreate("file.3.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
+    H5Fflush(file, H5F_SCOPE_GLOBAL);
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank == 0) {
+        size_t size;
+        H5Fget_filesize(file, &size);
+        printf("File size: %zu\n", size);
+    }
+    H5Fclose(file);
+    H5Pclose(fapl);
+    MPI_Finalize();
+    return 0;
+}
+\end{minted}
+\end{listing}
+
+\subsection{Distributed states, \& synchronization}\label{sec:MPI-state-n-sync}
+
+In this section, we describe library structures, conventions, and mechanisms that ensure that MPI-rank-local HDF5 states can be interpreted as a globally coherent and consistent state.
+
+\subsection{Parallel file systems \& parallel HDF5 I/O challenges}
+
+Small I/O and (file system) metadata pressures are amplified on parallel file systems. In this section, we review HDF5 library I/O-specific challenges and potential mitigation.
+
+\subsection{I/O optimizations}
+
+In this section, we describe the implementation of specific optimizations to reduce parallel HDF5 I/O overhead and improve scalability, including meta- and raw-data accumulation, aggregation, \& concentration.
+
+\subsection{Limits of MPI-style parallelization}
+
+
+\subsection{Summary}
