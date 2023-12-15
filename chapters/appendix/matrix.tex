@@ -1,4 +1,4 @@
-\todo[inline]{Owner: Dana -- Priority: High -- Effort: M -- Completion: 5\%}
+%\todo[inline]{Owner: Dana -- Priority: High -- Effort: M -- Completion: 90\%}
 
 \section{Operating Systems}
 
@@ -8,7 +8,7 @@
     \item Parallel HDF5 is poorly tested on Windows
     \item The direct VFD is not supported as it uses the POSIX \texttt{O\_DIRECT} flag
     \item Thread-safety uses win32 threads
-    \item Some API calls use \texttt{off\_t}, which is 32-bits on Windows (we use \texttt{\_\_int64} internally)
+    \item Some API calls use \texttt{off\_t}, which is a 32-bit type on Windows (we use \texttt{\_\_int64} internally)
     \item Unicode file paths are not well-supported
 \end{itemize}
 
@@ -16,93 +16,87 @@
 
 All features should be supported in both the Autotools and CMake.
 
-\section{Feature Compatibility}
+\section{Thread-Safety}
 
-Only incompatibilities are noted (an empty cell implies compatibility).
+Thread-safety is currently implemented via a global API lock, which works with any API call in the HDF5 C library. This includes parallel HDF5, even though the build system will disallow this combination in earlier versions of the library (for no particular reason other than we didn't test it).
 
-\begin{minipage}{\textwidth}
-  \begin{center}
-    \begin{tabular}{|| c | c | c | c ||}
-      \hline
-      Feature & Serial & SWMR (serial) & Parallel \\
-      \hline
-      Free-space tracking & ? & ? & ?\\
-      \hline
-      Paged Allocation & ? & ? & ? \\
-      \hline
+The global lock is not implemented in any of the wrapper or higher-level libraries, so they are NOT thread-safe:
 
-      Virtual Dataset (VDS) Layout & ? & ? & ? \\
-      \hline
-      Variable-length datatypes & ? & ? & ? \\
-      \hline
-    \end{tabular}
-  \end{center}
-\end{minipage}
-
-\section{Other Miscellaneous Limitations}
 \begin{itemize}
-    \item The current implementation of virtual datasets doesn't support point selections
-    \item The direct VFD requires \texttt{open(2)} to take the \texttt{O\_DIRECT} flag
+    \item High-Level Library
+    \item C++ API
+    \item Fortran API
+    \item Java API
 \end{itemize}
 
-%\begin{minipage}{\textwidth}
-%  \begin{center}
-%    \begin{tabular}{|| c | c | c | c | c | c ||}
-%      \hline
-%      & SWMR & Paged Allocation & Free-space tracking & VDS & Non-fixed-size datatypes \\
-%      \hline
-%      SWMR & S & S? & S? & S & $\times$ \\
-%      \hline
-%      Paged Allocation & & P\footnote{No page buffering?} & P? & P? & S \\
-%      \hline
-%      Free-space tracking & & & P? & P? & S \\
-%      \hline
-%      VDS & & & & P & S \\
-%      \hline
-%      Non-fixed-size datatypes & & & & &  S \\
-%      \hline
-%    \end{tabular}
-%  \end{center}
-%\end{minipage}
+\newpage
 
-%\paragraph{Symbology}
-%\todo[inline]{GH: Is this a good way of breaking it down?}
-%\begin{itemize}
-%    \item S - sequential only
-%    \item P - MPI parallel \& sequential
-%    \item $\times$ - unsupported
-%\end{itemize}
+\section{Feature Compatibility}
 
-%\paragraph{Other}
-%\begin{itemize}
-%    \item The current implementation of virtual datasets doesn't support point selections
-%\end{itemize}
+\begin{minipage}{\textwidth}
+    \begin{center}
+        \begin{tabular}{|| c | c | c | c ||}
+            \hline
+            \textbf{Feature} & \textbf{Serial} & \textbf{SWMR (serial)} & \textbf{Parallel} \\
+            \hline
+            Asynchronous Operations & 1 & 1 & 1 \\
+            \hline
+            Compression (Filtering) & Y & Y & 11 \\
+            \hline
+            Direct Chunk I/O & Y & Y & 8 (?) \\
+            \hline
+            Direct VFD & 2 & 2 & 2 \\
+            \hline
+            External Data Storage & Y & Y & 9 \\
+            \hline
+            External Links & Y & 7 & Y \\
+            \hline
+            Evict-on-Close & Y & Y & N \\
+            \hline
+            File Image & Y & N & N \\
+            \hline
+            Free-Space Tracking & Y & N & Y \\
+            \hline
+            Metadata Cache Image & Y & Y & Y \\
+            \hline
+            Metadata Page Buffering & Y & N & N \\
+            \hline
+            Metadata Updates & Y & 5 & 6 \\
+            \hline
+            Multi-Dataset I/O & 3 & 3 & 3 \\
+            \hline
+            Selection I/O & 3 & 3 & 3 \\
+            \hline
+            User-Defined Links & Y & 7 & Y \\
+            \hline
+            Variable-Length Datatypes & Y & N & 7 \\
+            \hline
+            Vector I/O & 3 & 3 & 3 \\
+            \hline
+            Virtual Dataset (VDS) Layout & 4 & 4 & 10 \\
+            \hline
+        \end{tabular}
 
-% Other row/column candidates
-% - VDS
-% - Paged allocation/page buffering
-% - ???
+        \footnotesize
+        \begin{enumerate}
+            \item Requires a suitable VOL connector (NOT the native connector)
+            \item Requires the POSIX \texttt{open(2)} call to accept the \texttt{O\_DIRECT} flag
+            \item Requires a suitable virtual file driver (e.g., MPI-I/O) to see a benefit
+            \item Does not support point selections
+            \item Extending datasets only
+            \item Requires collective metadata operations if writing to a common file
+            \item Read-only
+            \item Not with filtered chunks
+            \item Independent only
+            \item Parallel VDS has limited functionality
+            \item Limited to early allocation
+        \end{enumerate}
+        \normalsize
 
-% Wrappers/High-level*
-%Parallel vs. \\ Serial & Thread-Safe vs. \\ Not Thread-Safe & Windows/MacOS/ \\ Linux/Misc. POSIX \\
-% https://stackoverflow.com/questions/2888817/footnotes-for-tables-in-latex for footnotes in table
-% SWMR doesn't support variable-length and region reference datatypes
+    \end{center}
+\end{minipage}
 
-% Collective metadata writes aren't supported with page buffering, separate table probably(?)
-% Page buffering doesn't support parallel HDF5
-
-% Free space mangement
-
-% ROS3 VFD -> 
-% Lots of missing documentation
-
-% Direct VFD
-
-% Core, Direct, Onion, Family, Log, MPIO, Multi, Sec2, Splitter, Mirror, etc VFDs? 
-
-% Metadata cache?
-
-% 
+\newpage
 
 \paragraph{VFD stackability and features}
 \begin{center}
@@ -113,8 +107,10 @@ Only incompatibilities are noted (an empty cell implies compatibility).
       \rotatebox{90}{Terminal} & core, direct, HDFS, Hermes, log, MPI-I/O, sec2, ros3, stdio\\
       \hline
     \end{tabular}
-  \end{center}
 
-NOTE: The onion and subfiling VFDs are currently hard-coded to use the sec2 VFD.
+    \footnotesize
+    \textbf{NOTE:} The onion and subfiling VFDs are currently hard-coded to use the sec2 VFD.
+    \normalsize
+\end{center}
 
-\paragraph{VOL connector stackability}
+%\paragraph{VOL connector stackability}

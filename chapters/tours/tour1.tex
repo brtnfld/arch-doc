@@ -56,7 +56,7 @@ end
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.7\textwidth]{images/VOL_arch.png}
-\caption{VOL Architecture}
+\caption{The VOL architecture.}
 \label{fig:vol-arch}
 \end{figure}
 
@@ -75,7 +75,7 @@ In this section, we describe the life cycle of an HDF5 library instance running 
     \item As a library developer, what library changes require careful consideration of/coordination with library initialization/finalization?
 \end{itemize}
 
-\paragraph{Prototype.} Consider the HDF5 version of a ``Hello, World!" program shown in Listing~\ref{lst:explicit-init}.
+\paragraph{Prototype.} Consider the HDF5 version of a ``Hello, World!" program shown in Listing~\ref{lst:explicit-init}. The naming \func{H5[open,close]} is perhaps a little misleading (Why not \func{H5[init,finalize]}?), but, for reasons which will become clear later, most users and developers will never call these two functions directly.
 
 \begin{listing}[H]
 \caption{Explicit HDF5 library run-time initialization and finalization.}
@@ -91,7 +91,6 @@ int main() {
 \end{minted}
 \end{listing}
 
-The naming \texttt{H5[open,close]} is perhaps a little misleading (Why not \texttt{H5[init,finalize]}?), but, for reasons which will become clear later, most users and developers will never call these two functions directly.
 
 \paragraph{Goals.} The main goals of library initialization and finalization are:
 
@@ -105,13 +104,13 @@ The naming \texttt{H5[open,close]} is perhaps a little misleading (Why not \text
     \end{itemize}
 \end{itemize}
 
-\paragraph{Control flow.} A cursory inspection of the call graph of the program shown in Listing~\ref{lst:explicit-init} suggests that \texttt{H5[open,close]} proceed directly to \texttt{H5\_[init,term]\_library}, respectively.
+\paragraph{Control flow.} A cursory inspection of the call graph of the program shown in Listing~\ref{lst:explicit-init} suggests that \func{H5[open,close]} proceed directly to \func{H5_[init,term]_library}, respectively.
 
-\texttt{H5\_init\_library} is responsible for calling the initializers of all non-VOL and native VOL library modules (aka ``packages") in the correct order so that no module is initialized before its prerequisite modules. A table in \texttt{H5\_init\_library} establishes the order of initialization. The table, as implemented at the time of this writing, is shown in Listing~\ref{lst:init-table}.
+\func{H5_init_library} is responsible for calling the initializers of all non-VOL and native VOL library modules (aka ``packages") in the correct order so that no module is initialized before its prerequisite modules. A table in \func{H5_init_library} establishes the order of initialization. The table, as implemented at the time of this writing, is shown in Listing~\ref{lst:init-table}.
 
 \begin{listing}
 \centering
-\caption{\texttt{H5\_init\_library} initialization table.}
+\caption{\texttt{H5\_init\_library()} initialization table.}
 \label{lst:init-table}
 \begin{minted}[linenos]{C}
 struct {
@@ -137,11 +136,11 @@ struct {
 
 Most package initializers (the \texttt{H5*\_init*} routines) register identifier classes or check environment variables. The only notable exception is the \texttt{H5T} package initializer, which initializes identifiers (stored in global variables) for built-in datatypes and several pre-defined datatype transformations. For this tour, where we do not encounter any identifiers, it is sufficient to know that identifiers are ephemeral handles of API type \texttt{hid\_t}, which the library uses to track API entities. For efficiency and error checking, the identifier space is ``partitioned'' into identifiers of different types, and developers can create (register) custom identifier types to track their entities.
 
-As the table shows, a few modules (\texttt{H5P,H5VL}) require phased initialization. \texttt{H5\_default\_vfd\_init}, in connection with \texttt{H5P\_init\_phase2},  registers and initializes the POSIX VFD as the default file driver. Finally, \texttt{H5VL\_init\_phase2} initializes the remaining modules according to a similar table shown in Listing~\ref{lst:vol2-init-table}.
+As the table shows, a few modules (\texttt{H5P,H5VL}) require phased initialization. \texttt{H5\_default\_vfd\_init()}, in connection with \texttt{H5P\_init\_phase2()},  registers and initializes the POSIX VFD as the default file driver. Finally, \texttt{H5VL\_init\_phase2()} initializes the remaining modules according to a similar table shown in Listing~\ref{lst:vol2-init-table}.
 
 \begin{listing}
 \centering
-\caption{\texttt{H5VL\_init\_phase2} initialization table.}
+\caption{\texttt{H5VL\_init\_phase2()} initialization table.}
 \label{lst:vol2-init-table}
 \begin{minted}[linenos]{C}
 struct {
@@ -163,17 +162,15 @@ struct {
 \end{minted}
 \end{listing}
 
-\texttt{H5VL\_init\_phase2} concludes the HDF5 library initialization.
+\texttt{H5VL\_init\_phase2()} concludes the HDF5 library initialization.
 
 Only \texttt{H5[A,D,F,G,L,M,T]} API functions will pass through the VOL layer; all other packages support non-VOL API calls or library internal infrastructure.
 
-\noindent\fbox{\parbox{\textwidth}{At this point, the library would be considered initialized with its default configuration (native VOL + POSIX VFD), and the application can proceed to create and manipulate HDF5 virtual objects that are mapped to HDF5 files in a POSIX-compliant file system. For other mappings, different VOL connectors or VFD plugins would be required.}}
+\noindent\fbox{\parbox{\linewidth}{At this point, the library would be considered initialized with its default configuration (native VOL + POSIX VFD), and the application can proceed to create and manipulate HDF5 virtual objects that are mapped to HDF5 files in a POSIX-compliant file system. For other mappings, different VOL connectors or VFD plugins would be required.}}
 
-The library has a default behavior to shut down when the application exits by registering an \texttt{atexit(3)} handler, \texttt{H5\_term\_library}. This will invoke modules' \texttt{H5*\_[top]\_term\_package} functions. The shutdown table is too extensive to be repeated here. It is also heavily commented on and should be consulted for more in-depth information. Akin to the phased initialization for certain modules, the finalization of a few modules is split into ``top" and ``bottom" portions. Note that some entries in the shutdown table are marked as ``barriers," and if a new module should only be shutdown \textit{strictly after} the preceding modules, then it should be marked as a barrier. This is achieved by setting the \texttt{wait} parameter of the \texttt{TERMINATOR} macro for the corresponding module to \texttt{true}.
+The library has a default behavior to shut down when the application exits by registering an \texttt{atexit(3)} handler, \func{H5_term_library}. This will invoke modules' \func{H5*_[top]_term_package} functions. The shutdown table is too extensive to be repeated here. It is also heavily commented on and should be consulted for more in-depth information. Akin to the phased initialization for certain modules, the finalization of a few modules is split into ``top" and ``bottom" portions. Note that some entries in the shutdown table are marked as ``barriers," and if a new module should only be shutdown \textit{strictly after} the preceding modules, then it should be marked as a barrier. This is achieved by setting the \texttt{wait} parameter of the \texttt{TERMINATOR} macro for the corresponding module to \texttt{true}.
 
-\paragraph{Data flow.} The library initialization/finalization state is tracked in two global variables, \texttt{H5\_[INIT,TERM]\_GLOBAL}, which are set in \texttt{H5\_[init,term]\_library}, respectively. The initialization/finalization of library modules usually involves the (de-)registration of module-specific identifier types (e.g., \texttt{H5I\_DATASPACE\_CLS} and \texttt{H5I\_SPACE\_SEL\_ITER\_CLS} for \texttt{H5S}) and the initialization/finalization of module-specific global variables. Perhaps the most elaborate example is \texttt{H5T}, which requires the initialization/finalization of built-in datatypes such as \texttt{H5T\_IEEE\_F64BE\_g} and conversion functions such as \texttt{H5T\_\_conv\_double\_ldouble} in the global variable \texttt{H5T\_g}. Otherwise, there is very little data flow activity during library initialization/finalization.
-
-\paragraph{Variants.} In Listing~\ref{lst:implicit-init}, a variant of the ``Hello, World!" example is shown.
+\paragraph{Data flow.} The library's initialization and finalization state are tracked in two global variables, namely \texttt{H5\_INIT\_GLOBAL} and \texttt{H5\_TERM\_GLOBAL}. These variables are specifically set by two library functions \texttt{H5\_init\_library()} and \texttt{H5\_term\_library()}, respectively. The initialization and finalization of library modules typically involve registering and unregistering module-specific identifier types (for example, \texttt{H5I\_DATASPACE\_CLS} and \texttt{H5I\_SPACE\_SEL\_ITER\_CLS} for \texttt{H5S}) and the initialization/finalization of module-specific global variables. Perhaps the most elaborate example is \texttt{H5T}, which requires the initialization/finalization of built-in datatypes such as \texttt{H5T\_IEEE\_F64BE\_g} and conversion functions such as \texttt{H5T\_\_conv\_double\_ldouble()} in the global variable \texttt{H5T\_g}. Otherwise, there is very little data flow activity during library initialization/finalization.
 
 \begin{listing}
 \centering
@@ -190,10 +187,10 @@ int main() {
 \end{minted}
 \end{listing}
 
-The main difference is a new call (\texttt{H5get\_libversion}), and the dropped calls to \texttt{H5[open,close]}. It turns out that the HDF5 library initializes itself as needed whenever an application either enters the library through an API function call such as \texttt{H5get\_libversion}, or when an application evaluates an HDF5 symbol that represents a macro such as \texttt{H5F\_ACC\_RDONLY} or \texttt{H5F\_ACC\_RDWR}, a property-list class identifier such as \texttt{H5P\_FILE\_ACCESS}, a VFD identifier such as \texttt{H5FD\_FAMILY} or \texttt{H5FD\_SEC2}, or a type identifier
+\paragraph{Variants.} In Listing~\ref{lst:implicit-init}, a variant of the ``Hello, World!" example is shown. The notable difference is the new function \func{H5get_libversion}, while the previous version had calls to \func{H5open} and \func{H5close}, which have been removed in the new version. It turns out that the HDF5 library initializes itself as needed whenever an application either enters the library through an API function call such as \texttt{H5get\_libversion()}, or when an application evaluates an HDF5 symbol that represents a macro such as \texttt{H5F\_ACC\_RDONLY} or \texttt{H5F\_ACC\_RDWR}, a property-list class identifier such as \texttt{H5P\_FILE\_ACCESS}, a VFD identifier such as \texttt{H5FD\_FAMILY} or \texttt{H5FD\_SEC2}, or a type identifier
 such as \texttt{H5T\_NATIVE\_INT64}.
 
-The library provides a couple of macros that initialize the library as necessary. Library initialization is checked as a side-effect of the \texttt{FUNC\_ENTER\_API*} macros used at the top of most API functions. HDF5 library symbols other than functions are provided through \texttt{\#define}s that use the \texttt{H5OPEN} macro to introduce a library-initialization call (\texttt{H5open}) at each site where a non-function symbol is used.
+The library provides a couple of macros that initialize the library as necessary. Library initialization is checked as a side-effect of the \texttt{FUNC\_ENTER\_API*} macros used at the top of most API functions. HDF5 library symbols other than functions are provided through \texttt{\#define}s that use the \texttt{H5OPEN} macro to introduce a library-initialization call (\texttt{H5open()}) at each site where a non-function symbol is used.
 
 Two noteworthy variants of HDF5 library initialization and finalization will be discussed in later tours. One is the case of MPI-parallel HDF5
 %(see section~\ref{sec:MPI-state-n-sync})
@@ -210,10 +207,10 @@ If a developer adds a module that needs to release resources during library shut
 \paragraph{Source code recommended for study.}
 
 \begin{itemize}
-    \item \texttt{H5\_[init,term]\_library} in \texttt{H5.c}
-    \item \texttt{H5E\_[init,term]\_package} in \texttt{H5E.c}
-    \item \texttt{H5T\_init, H5T\_top\_term\_package} in \texttt{H5T.c}
-    \item \texttt{H5VL\_init\_phase2} in \texttt{H5VLint.c}
+    \item \texttt{H5\_[init,term]\_library()} in \texttt{H5.c}
+    \item \texttt{H5E\_[init,term]\_package()} in \texttt{H5E.c}
+    \item \texttt{H5T\_init(), H5T\_top\_term\_package()} in \texttt{H5T.c}
+    \item \texttt{H5VL\_init\_phase2()} in \texttt{H5VLint.c}
 \end{itemize}
 
 \subsection{Summary}

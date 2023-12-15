@@ -2,25 +2,24 @@
 %|  Name  | TODO | ONGOING | DONE |
 %|--------|------|---------|------|
 %| Dana   | x    |         |      |
-%| Gerd   |      |  x      |      |
-%| Glenn  |      |         |    x |
+%| Gerd   |      |         |  x   |
+%| Glenn  |      |         |  x   |
 %| Jordan | x    |         |      |
 %| Luke   | x    |         |      |
 %| Matt   |      |         |  x   |
 %| Neil   | x    |         |      |
 %| Scot   | x    |         |      |
 
-\todo[inline]{Owner: Gerd -- Priority: High -- Effort: M - Completion: 75\%}
-
-What's hierarchical about HDF5? The realization of the object namespace.
+A somewhat twisted reading of `Hierarchical Data Format' might create the idea that there might be something hierarchical about the file format. There indeed are a few discernible layers in the file format specification~\cite{ffmt}, and we used the TCP/IP protocol metaphor (see Figure~\ref{fig:tcpip-protocols}) to explain how the native VOL frames user metadata and data into portable self-describing packages, but this would be a rather uninteresting hierarchy, and none that would help users. What's hierarchical about HDF5 is how the object namespace is realized through groups and links, which differs fundamentally from hierarchies that can be mimicked in key-value representations. Not only is the file-system-in-a-file metaphor apt, but an HDF5 file is also a \textit{web-in-a-file}.
 
 \subsection{Groups}
 
 \paragraph{Overview} Groups are a key aspect of an HDF5 file's hierarchical structure. A minimal example of group creation is shown in Listing~\ref{lst:group-life-cycle}. 
 
-It is often said that named HDF5 objects (datasets, groups, and committed datatypes) reside in groups. To be more precise, groups contain link objects that point to named HDF5 objects. When a named object is created, a link that points to it is also created. It is this link that is written to the group's object header in storage. This is why \texttt{H5Dcreate}, \texttt{H5Tcommit}, and \texttt{H5Gcreate} all take a link creation property list as an argument.
+It is often said that named HDF5 objects (datasets, groups, and committed datatypes) reside in groups. To be more precise, groups contain link objects that point to named HDF5 objects. When a named object is created, a link that points to it is also created. It is this link that is written to the group's object header in storage. This is why \texttt{H5Dcreate()}, \texttt{H5Tcommit()}, and \texttt{H5Gcreate()} all take a link creation property list as an argument.
 
-Figure~\ref{fig:tour-4-uml-group-create} shows the library's internal process to create a new group through the native VOL. The application calls the API function \texttt{H5Gcreate}, and because groups are (generally) named objects, \texttt{H5G\_\_create\_named} is invoked. \texttt{H5L\_link\_object} is used to link the newly-created group into the hierarchy of the HDF5 file, which involves creating a link to point at the new group with \texttt{H5L\_\_create\_real}. This link is stored in the parent group of the new object, which in this case is the root group.
+Figure~\ref{fig:tour-4-uml-group-create} shows the library's internal process to create a new group through the native VOL. The application calls the API function \texttt{H5Gcreate()}, and because groups are (generally) named objects, \texttt{H5G\_\_create\_named()} is invoked. After creating a new group in an HDF5 file, \texttt{H5L\_link\_object()} links it into the HDF5 file hierarchy. This linking process involves creating a link using \texttt{H5L\_\_create\_real()} that points to the newly created group. The link is then stored in the parent group of the new object, which, in this case, is the root group.
+
 
 \begin{listing}
 \centering
@@ -89,7 +88,7 @@ int main() {
 
 \subsection{Links}
 
-\paragraph{Overview} The structure of an HDF5 file is a rooted, directed graph. Named objects form the nodes of this graph, and links are the edges between them. Links point from a group to a target object, and may be 'traversed' from their parent group to access the target object. Links are indexed within a group, allowing them to be iterated through recursively with \texttt{H5Lvisit} or non-recursively with \texttt{H5Literate}. 
+\paragraph{Overview} The structure of an HDF5 file is a rooted, directed graph. Named objects form the nodes of this graph, and links are the edges between them. Links point from a group to a target object, and may be 'traversed' from their parent group to access the target object. Links are indexed within a group, allowing them to be iterated through recursively with \texttt{H5Lvisit()} or non-recursively with \texttt{H5Literate()}. 
 
 When a named object is created in a particular group, a hard link pointing to it is created and placed in that group. Hard links store the physical address of the object in the file. Other types of links, which use a name or other symbol to point to an object rather than its physical address, are called 'symbolic links'.
 
@@ -134,9 +133,9 @@ end
     \label{fig:tour-4-uml-link-create}
 \end{figure}
 
-\paragraph{Link Creation} Figure~\ref{fig:tour-4-uml-link-create} illustrates the library's process for link creation. After link-type-specific setup is done by \texttt{H5L\_\_create\_(hard/soft/external/ud)}, the link object is created by \texttt{H5L\_\_create\_real}.
+\paragraph{Link Creation} Figure~\ref{fig:tour-4-uml-link-create} illustrates the library's process for link creation. After link-type-specific setup is done by \texttt{H5L\_\_create\_[hard/soft/external/ud]()}, the link object is created by \texttt{H5L\_\_create\_real()}.
 
-The API's link creation functions require both a location identifier and a name for the link that will be created. This link name may be a relative path from the object specified by the location identifier, or an absolute path from the root of the file. If the provided link name is a path with intermediate elements, then \texttt{H5G\_traverse} is used to traverse the path and create the link object at the correct place in the file hierarchy. Once the final destination for the new link is reached, the link is inserted into the group containing it with \texttt{H5G\_obj\_insert}. If it is a hard link, \texttt{H5O\_link} increments the target object's \texttt{nlink} count. 
+The API's link creation functions require both a location identifier and a name for the link that will be created. This link name may be a relative path from the object specified by the location identifier, or an absolute path from the root of the file. If the provided link name is a path with intermediate elements, then \texttt{H5G\_traverse()} is used to traverse the path and create the link object at the correct place in the file hierarchy. Once the final destination for the new link is reached, the link is inserted into the group containing it with \texttt{H5G\_obj\_insert()}. If it is a hard link, \texttt{H5O\_link()} increments the target object's \texttt{nlink} count. 
 
 \paragraph{Soft Links} Soft links are a type of symbolic link that point to a path in the file hierarchy rather than an address in the file. When a soft link is created, no checks are performed to ensure that an object exists at the target path. A link that does not point to an existing object is called a dangling link. Allowing soft links to dangle means that changing, removing or entirely replacing an object that resides at a location pointed to by soft links can be done without additional work on the part of the library or the application.
 
@@ -198,7 +197,7 @@ H5G -> H5D: Return dataset location info
 
 \paragraph{Accessing Objects Through Links} Figure~\ref{fig:tour-4-uml-link-access} shows the process the library uses to access an object through a link. 
 
-After the VOL layer is passed through and the native \texttt{H5D\_\_open\_name} is invoked, \texttt{H5G\_loc\_find} is called in order to retrieve the two components of the location of the dataset - the path to it in the file hierarchy and its address in physical storage. This function invokes \texttt{H5G\_traverse} to traverse the path to the link, as well as the path the link contains if it is a soft or external link. \texttt{H5G\_loc\_find} also provides the traversal function with the \texttt{H5G\_\_loc\_find\_cb} callback to be used upon locating the target object. This callback copies the target object's group location information. After the location information is retrieved, the rest of the type-specific object opening work is performed. 
+After the VOL layer is passed through and the native \texttt{H5D\_\_open\_name()} is invoked, \texttt{H5G\_loc\_find()} is called in order to retrieve the two components of the location of the dataset - the path to it in the file hierarchy and its address in physical storage. This function invokes \texttt{H5G\_traverse()} to traverse the path to the link, as well as the path the link contains if it is a soft or external link. \texttt{H5G\_loc\_find()} also provides the traversal function with the \texttt{H5G\_\_loc\_find\_cb()} callback to be used upon locating the target object. This callback copies the target object's group location information. After the location information is retrieved, the rest of the type-specific object opening work is performed. 
 
 \begin{listing}
 \centering
@@ -239,9 +238,9 @@ int main() {
 \end{minted}
 \end{listing}
 
-\paragraph{User-defined Links} As part of the library's effort to be as extensible as possible, users may define and register their own link types. \texttt{H5Lregister} can be used to register a new link class, after which an instance of the new link class may be created with \texttt{H5Lcreate\_ud}.  
+\paragraph{User-defined Links} As part of the library's effort to be as extensible as possible, users may define and register their own link types. \texttt{H5Lregister()} can be used to register a new link class, after which an instance of the new link class may be created with \texttt{H5Lcreate\_ud()}.  
 
-Listing ~\ref{lst:ud-link-example} shows a minimal example of a user-defined link class, which mimics the behavior of soft links. The only callback that must be defined is the traversal callback, which handles obtaining an object handle from a link pointing to that object. The other callbacks - create, move, copy, delete, and query - all have some baseline functionality implemented by the library, with the user's callback being invoked after the internal work is completed. For example, for a user-defined link class with no provided query callback, \texttt{H5Lget\_info} will still return the character set of the link's name, its creation order in its parent group, whether its creation order is valid, and the link's type. However, the returned size of the link will default to zero unless the query operation is implemented.
+Listing ~\ref{lst:ud-link-example} shows a minimal example of a user-defined link class, which mimics the behavior of soft links. The only callback that must be defined is the traversal callback, which handles obtaining an object handle from a link pointing to that object. The other callbacks - create, move, copy, delete, and query - all have some baseline functionality implemented by the library, with the user's callback being invoked after the internal work is completed. For example, for a user-defined link class with no provided query callback, \texttt{H5Lget\_info()} will still return the character set of the link's name, its creation order in its parent group, whether its creation order is valid, and the link's type. However, the returned size of the link will default to zero unless the query operation is implemented.
 
 \subsection{Link Storage}
 
@@ -249,7 +248,7 @@ Listing ~\ref{lst:ud-link-example} shows a minimal example of a user-defined lin
 
 Older versions of the file format stored all links in a symbol table. A symbol table will still be used for link storage if the 'low' library compatibility version on a file is set lower than 1.8. By default, a new file has its 'low' compatibility version set to \texttt{H5F\_LIBVER\_EARLIEST}, which will disable use of the fractal heap for dense link storage.
 
-Links are stored compactly if two criteria are met: the link message is under 64 KiB in size, and the number of links is below the maximum number of compact links on the group. The maximum number of compact links on a group may be set at creation time via \texttt{H5Pset\_link\_phase\_change}. If either of these criteria are not met, the new link will be put into dense storage, and any existing compact links will be converted to dense storage. If the number of links later drops below the minimum number of compact links set by \texttt{H5Pset\_link\_phase\_change}, then any links below 64 KiB will be converted to compact storage.
+Links are stored compactly if two criteria are met: the link message is under 64 KiB in size, and the number of links is below the maximum number of compact links on the group. The maximum number of compact links on a group may be set at creation time via \texttt{H5Pset\_link\_phase\_change()}. If either of these criteria are not met, the new link will be put into dense storage, and any existing compact links will be converted to dense storage. If the number of links later drops below the minimum number of compact links set by \texttt{H5Pset\_link\_phase\_change()}, then any links below 64 KiB will be converted to compact storage.
 
 \begin{comment}
 https://www.plantuml.com/plantuml/
@@ -326,7 +325,7 @@ hnote over H5O #FFAAAA: Object header is unpinned
     \label{fig:tour-4-uml-link-storage-compact}
 \end{figure}
 
-\paragraph{Inserting Links into Storage} An example of link insertion into dense storage is illustrated in Figure~\ref{fig:tour-4-uml-link-storage-dense}. If the file does not yet have the structures needed to store dense links, they are created in \texttt{H5G\_\_dense\_create}. This involves creating a fractal heap for dense links via \texttt{H5HF\_create}, creating a B-tree to hold the names of dense links via \texttt{H5B2\_create}, and, if creation order is tracked on the parent group, creating another B-tree to track creation order. Once the the structures for dense storage are confirmed to exist, insertion into dense storage is handled by \texttt{H5G\_dense\_insert}. The insertion into the fractal heap itself is done by \texttt{H5HF\_insert}. The name-index B-tree stores information about the link that may later be accessed by the hash of the link name, and the creation-order B-tree stores the same information with the link creation index as the key.
+\paragraph{Inserting Links into Storage} An example of link insertion into dense storage is illustrated in Figure~\ref{fig:tour-4-uml-link-storage-dense}. If the file does not yet have the structures needed to store dense links, they are created in \texttt{H5G\_\_dense\_create()}. This involves creating a fractal heap for dense links via \texttt{H5HF\_create()}, creating a B-tree to hold the names of dense links via \texttt{H5B2\_create()}, and, if creation order is tracked on the parent group, creating another B-tree to track creation order. Once the the structures for dense storage are confirmed to exist, insertion into dense storage is handled by \texttt{H5G\_dense\_insert()}. The insertion into the fractal heap itself is done by \texttt{H5HF\_insert()}. The name-index B-tree stores information about the link that may later be accessed by the hash of the link name, and the creation-order B-tree stores the same information with the link creation index as the key.
 
 \begin{comment}
 https://www.plantuml.com/plantuml
@@ -401,18 +400,18 @@ H5G -> H5D: Return dataset handle
 \label{fig:tour-4-uml-link-access-dense}
 \end{figure}
 
-The process for compact link insertion into the object header is illustrated in Figure~\ref{fig:tour-4-uml-link-storage-compact}. Compact links are inserted by \texttt{H5G\_\_compact\_insert}. \texttt{H5G\_msg\_create} sets up the message to be inserted. Before the message is appended onto the object header, the object header is "pinned" with \texttt{H5O\_pin}. Pinning the object header prevents it from being written from cache to storage in the middle of operations that modify the header. \texttt{H5O\_msg\_append\_oh} appends the newly created message to the object header. This is done in two parts: first \texttt{H5O\_\_msg\_alloc} creates space in the object header, then \texttt{H5O\_\_copy\_mesg} populates the allocated memory with link message information. Lastly, the object header is unpinned by \texttt{H5O\_unpin}, allowing it to be flushed from cache again.
+The process for compact link insertion into the object header is illustrated in Figure~\ref{fig:tour-4-uml-link-storage-compact}. Compact links are inserted by \texttt{H5G\_\_compact\_insert()}. \texttt{H5G\_msg\_create()} sets up the message to be inserted. Before the message is appended onto the object header, the object header is "pinned" with \texttt{H5O\_pin()}. Pinning the object header prevents it from being written from cache to storage in the middle of operations that modify the header. \texttt{H5O\_msg\_append\_oh()} appends the newly created message to the object header. This is done in two parts: first \texttt{H5O\_\_msg\_alloc()} creates space in the object header, then \texttt{H5O\_\_copy\_mesg()} populates the allocated memory with link message information. Lastly, the object header is unpinned by \texttt{H5O\_unpin()}, allowing it to be flushed from cache again.
 
-\paragraph{Accessing Links in Storage} Figures~\ref{fig:tour-4-uml-link-access-compact} and \ref{fig:tour-4-uml-link-access-dense} illustrate the library's process to access objects through links in compact and dense storage, respectively.
+\paragraph{Accessing Links in Storage} Figures~\ref{fig:tour-4-uml-link-access-compact} and \ref{fig:tour-4-uml-link-access-dense} illustrate the library's process for accessing objects through links in compact and dense storage, respectively.
 
-\texttt{H5G\_traverse} is used regardless of storage type to locate the link through the provided path in the file hierarchy. Once the correct location in the hierarchy is reached, the process branches based on how the link is stored.
+\func{H5G_traverse} is used regardless of storage type to locate the link through the provided path in the file hierarchy. Once the correct location in the hierarchy is reached, the process branches based on how the link is stored.
 
-If the link is compact, \texttt{H5G\_\_compact\_lookup} searches the object header for a message describing a link of the correct name. \texttt{H5O\_msg\_iterate} iterates through each message and uses \texttt{H5G\_compact\_lookup\_cb} to copy the link information if a match is found.
+If the link is compact, \func{H5G__compact_lookup} searches the object header for a message describing a link of the correct name. \texttt{H5O\_msg\_iterate()} iterates through each message and uses \texttt{H5G\_compact\_lookup\_cb()} to copy the link information if a match is found.
 
-If the link is dense, \texttt{H5G\_\_dense\_lookup} does the name lookup. The dense link fractal heap and the name index B-tree are both opened. \texttt{H5B2\_find} searches name index B-tree for the dense link. If a match is found, the provided callback \texttt{H5G\_\_dense\_lookup\_cb} copies the link information.
+If the link is dense, \texttt{H5G\_\_dense\_lookup()} does the name lookup. The dense link fractal heap and the name index B-tree are both opened. \texttt{H5B2\_find()} searches name index B-tree for the dense link. If a match is found, the provided callback \texttt{H5G\_\_dense\_lookup\_cb()} copies the link information.
 
-In both cases, once the link is found by name, its information is copied with \texttt{H5O\_msg\_copy} and returned to \texttt{H5G\_traverse}. The link traversal callback for the link's type is used to access information about the object through the link, and a handle to the object is returned by the top-level open function.
+In both cases, once the link is found by name, its information is copied with \texttt{H5O\_msg\_copy()} and returned to \texttt{H5G\_traverse()}. The link traversal callback for the link's type is used to access information about the object through the link, and a handle to the object is returned by the top-level open function.
 
-\subsection{Summary} Implementing group membership via links introduces a layer of indirection to the file hierarchy which is extremely powerful. Based on use case of the application, objects can be accessed based on storage location, path within the file hierarchy, path in the filesystem via external links, or something else entirely with user-defined link classes. Since scalability with extremely large amounts of data is a core goal of the HDF5 library, maximizing the user's ability to manipulate the file hierarchy without affecting the underlying arrangement of data is critical. 
+\subsection{Summary} Implementing group membership via links introduces a layer of indirection to the file hierarchy which is extremely powerful. Based on the use case of the application, objects can be accessed based on storage location, path within the file hierarchy, path in the filesystem via external links, or something else entirely with user-defined link classes. Since scalability with extremely large amounts of data is a core goal of the HDF5 library, maximizing the user's ability to manipulate the file hierarchy without affecting the underlying arrangement of data is critical. 
 
 Scalability with large numbers of links in a group was another important design goal, realized in the architecture by dense link storage. The tradeoff between compact storage being better for small numbers of links and dense storage being better for large numbers of links is automatically handled during operation by the maximum compact/minimum dense thresholds, and may also be custom-fit to a use case by the user through manipulating property lists.

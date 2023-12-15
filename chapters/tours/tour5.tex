@@ -3,7 +3,7 @@
 %|--------|------|---------|------|
 %| Dana   | x    |         |      |
 %| Gerd   | x    |         |      |
-%| Glenn  | x    |         |      |
+%| Glenn  |      |         |  x   |
 %| Jordan | x    |         |      |
 %| Luke   | x    |         |      |
 %| Matt   |      |         | x    |
@@ -26,13 +26,13 @@ The names through which the predefined types are accessed are defined as macros 
 
 Predefined types' inability to be modified is implemented through the \texttt{state} field of \texttt{H5T\_t}'s shared information. Predefined types are created with their state set to immutable, making them unmodifiable and unable to be closed by the user.
 
-\paragraph{Predefined Datatype Initialization} The H5T package is initialized during phase 2 of H5VL's initialization, as seen in Listing~\ref{lst:vol2-init-table}. An internal diagram of \texttt{H5T\_init} is shown in Figure~\ref{fig:h5t-init-table}.
+\paragraph{Predefined Datatype Initialization} The H5T package is initialized during phase 2 of H5VL's initialization, as seen in Listing~\ref{lst:vol2-init-table}. An internal diagram of \texttt{H5T\_init()} is shown in Figure~\ref{fig:h5t-init-table}.
 
-Predefined types that match the native platform are created first in two steps. In the first step, predefined float datatypes that match the native platform are created and registered in \\ \texttt{H5T\_\_init\_native\_float\_types}. The \texttt{DETECT\_F} macro detects the native platform's floating-point properties, which are used to construct matching datatypes. The datatypes are assigned library handles by \texttt{H5I\_register}. These handles are stored in a set of global variables with names of the form \texttt{H5T\_NATIVE\_<TYPE>\_g}. In the second step, a similar process is carried out for all other native datatypes in \texttt{H5T\_\_init\_native\_internal}, using detected information about the platform's byte order and alignment.
+Predefined types that match the native platform are created first in two steps. In the first step, predefined float datatypes that match the native platform are created and registered in \\ \texttt{H5T\_\_init\_native\_float\_types()}. The \texttt{DETECT\_F} macro detects the native platform's floating-point properties, which are used to construct matching datatypes. The datatypes are assigned library handles by \texttt{H5I\_register()}. These handles are stored in a set of global variables with names of the form \texttt{H5T\_NATIVE\_<TYPE>\_g}. In the second step, a similar process is carried out for all other native datatypes in \texttt{H5T\_\_init\_native\_internal()}, using detected information about the platform's byte order and alignment.
 
-Once the predefined native datatypes are created, they are used to create the predefined non-native datatypes through the macro \texttt{H5T\_INIT\_TYPE}. If the new type to be constructed is based on an existing one, this macro copies the provided base type with \texttt{H5T\_copy} before making size and byte order modifications. If the new type is not based on an existing type, the macro directly allocates space for a new \texttt{H5T\_t} structure and populates it using another macro of the form \texttt{H5T\_INIT\_TYPE\_<TYPE>\_CORE}. In both cases, \texttt{H5T\_INIT\_TYPE} registers the newly created datatype with the library, assigns it a handle through \texttt{H5I\_register}, and makes the handle globally accessible through \texttt{H5T\_<ARCH>\_<BASE>\_g}. A user can then access these handles through macros of the form \texttt{H5T\_<ARCH>\_<BASE>}, as discussed in the previous section. 
+Once the predefined native datatypes are created, they are used to create the predefined non-native datatypes through the macro \texttt{H5T\_INIT\_TYPE}. If the new type to be constructed is based on an existing one, this macro copies the provided base type with \texttt{H5T\_copy()} before making size and byte order modifications. If the new type is not based on an existing type, the macro directly allocates space for a new \texttt{H5T\_t} structure and populates it using another macro of the form \texttt{H5T\_INIT\_TYPE\_<TYPE>\_CORE}. In both cases, \texttt{H5T\_INIT\_TYPE} registers the newly created datatype with the library, assigns it a handle through \texttt{H5I\_register()}, and makes the handle globally accessible through \texttt{H5T\_<ARCH>\_<BASE>\_g}. A user can then access these handles through macros of the form \texttt{H5T\_<ARCH>\_<BASE>}, as discussed in the previous section. 
 
-In addition to initializing predefined datatypes, \texttt{H5T\_init} also sets up many internal datatype conversion routines through \texttt{H5T\_\_register\_int}, and registers the default property list for datatype creation, \texttt{H5P\_DATATYPE\_CREATE}, through \texttt{H5P\_create\_id}.
+In addition to initializing predefined datatypes, \texttt{H5T\_init()} also sets up many internal datatype conversion routines through \texttt{H5T\_\_register\_int()}, and registers the default property list for datatype creation, \texttt{H5P\_DATATYPE\_CREATE}, through \texttt{H5P\_create\_id()}.
 
 \begin{comment}
 http://www.plantuml.com/plantuml/uml/
@@ -70,7 +70,7 @@ rnote right: H5P_create_id
 \label{fig:h5t-init-table}
 \end{figure}
 
-\paragraph{User-defined Datatypes} Users may derive their own types from the predefined types by copying them to get a transient, modifiable copy. Figure~\ref{fig:predefined-type-copy} is a minimal example demonstrating user-defined type creation. Figure~\ref{fig:tour-5-uml-datatype-copy} shows the internal operation of \texttt{H5Tcopy}.
+\paragraph{User-defined Datatypes} Users may derive their own types from the predefined types by copying them to get a transient, modifiable copy. Figure~\ref{fig:predefined-type-copy} is a minimal example demonstrating user-defined type creation. Figure~\ref{fig:tour-5-uml-datatype-copy} shows the internal operation of \texttt{H5Tcopy()}.
 
 \begin{figure}
 \centering
@@ -111,7 +111,7 @@ H5I -> H5T: Datatype handle ID
     \label{fig:tour-5-uml-datatype-copy}
 \end{figure}
 
-\texttt{H5Tcopy} performs the datatype copy operation in two steps. First, \texttt{H5T\_\_initiate\_copy} allocates in-memory structures for the new object and, if the original datatype is committed, increases its in-memory reference count. Then \texttt{H5T\_\_complete\_copy} copies the information for the new datatype from the old datatype. Lastly, \texttt{H5I\_register} assigns a handle ID to the new datatype.
+\texttt{H5Tcopy} performs the datatype copy operation in two steps. First, \texttt{H5T\_\_initiate\_copy()} allocates in-memory structures for the new object and, if the original datatype is committed, increases its in-memory reference count. Then \texttt{H5T\_\_complete\_copy()} copies the information for the new datatype from the old datatype. Lastly, \texttt{H5I\_register()} assigns a handle ID to the new datatype.
 
 \begin{listing}
 \centering
@@ -157,9 +157,9 @@ rnote over H5T: New committed type object \nis attached to original H5T_t
 
 \paragraph{Committed Datatypes} There are two kinds of datatypes: transient datatypes that exist only in memory and committed (formerly "named") datatype objects that are written to storage.
 
-Listing~\ref{lst:type-commit} shows a minimal program that turns a transient datatype into a committed datatype via \\ \texttt{H5Tcommit}. After data is written to the file, the datatype will exist as an object on the file in storage.
+Listing~\ref{lst:type-commit} shows a minimal program that turns a transient datatype into a committed datatype via \\ \texttt{H5Tcommit()}. After data is written to the file, the datatype will exist as an object on the file in storage.
 
-Figure~\ref{fig:tour-5-uml-datatype-commit} shows the internal work done by \texttt{H5Tcommit} when using the native VOL. A copy of the provided datatype is created by \texttt{H5T\_copy}, and this copy is written to storage. \texttt{H5T\_\_commit\_named} sets up creation information for \texttt{H5L\_link\_object}, which creates the committed datatype object and a hard link used to link it into the file hierarchy. Lastly, the newly committed datatype object is attached, as an \texttt{H5VL\_object\_t} instance, to the \texttt{vol\_obj} field of the original datatype provided to \texttt{H5Tcommit}.
+Figure~\ref{fig:tour-5-uml-datatype-commit} shows the internal work done by \texttt{H5Tcommit()} when using the native VOL. A copy of the provided datatype is created by \texttt{H5T\_copy()}, and this copy is written to storage. \texttt{H5T\_\_commit\_named()} sets up creation information for \texttt{H5L\_link\_object()}, which creates the committed datatype object and a hard link used to link it into the file hierarchy. Lastly, the newly committed datatype object is attached as an \texttt{H5VL\_object\_t} instance to the \texttt{vol\_obj} field of the original datatype provided to \texttt{H5Tcommit()}.
 
 \subsection{Datatype conversion}\label{sec:dtype-conv}
 
@@ -171,7 +171,7 @@ In this section, we describe the circumstances in which and where datatype conve
 
 The library maintains a global table of type conversion functions, \texttt{H5T\_g}. Each conversion function is uniquely identified by a ``path'' (\texttt{H5T\_path\_t}) formed from the source and destination datatypes. When a conversion is necessary, a binary search is performed on this table to locate an appropriate conversion function. 
 
-\paragraph{User-Defined Conversion Functions} Users can add new conversion functions or overwrite the behavior of existing conversion functions through \texttt{H5Tregister}. A new hard conversion function will overwrite any previous conversion functions for the specified types, and a new soft conversion function will overwrite the conversion functions for any types to which it is applicable that do not already have a hard conversion function.
+\paragraph{User-Defined Conversion Functions} Users can add new conversion functions or overwrite the behavior of existing conversion functions through \texttt{H5Tregister()}. A new hard conversion function will overwrite any previous conversion functions for the specified types, and a new soft conversion function will overwrite the conversion functions for any types to which it is applicable that do not already have a hard conversion function.
 
 \begin{listing}
 \centering
@@ -215,7 +215,7 @@ herr_t convert(hid_t src_id, hid_t dst_id, H5T_cdata_t *cdata,
 \end{minted}
 \end{listing}
 
-Listing~\ref{lst:ud-datatype-conversion-setup} shows a user-defined conversion function \texttt{convert}, which converts between the user-defined compound datatypes \texttt{src\_t} and \texttt{dst\_t}. Notice that the conversion operation, \texttt{H5T\_CONV\_CONV}, occurs entirely within the main buffer. This is straightforward in this case because \texttt{src\_t} is larger than \texttt{dst\_t}, and so the assignment to \texttt{((dst\_t*) buf)[i].b} will never overwrite any memory needing to be read to convert a subsequent element. More complex conversions may need to use the 'background buffer', \texttt{bkg}, as a place for temporary storage.
+Listing~\ref{lst:ud-datatype-conversion-setup} shows a user-defined conversion function \texttt{convert()}, which converts between the user-defined compound datatypes \texttt{src\_t} and \texttt{dst\_t}. Notice that the conversion operation, \texttt{H5T\_CONV\_CONV}, occurs entirely within the main buffer. This is straightforward in this case because \texttt{src\_t} is larger than \texttt{dst\_t}, and so the assignment to \texttt{((dst\_t*) buf)[i].b} will never overwrite any memory needing to be read to convert a subsequent element. More complex conversions may need to use the 'background buffer', \texttt{bkg}, as a place for temporary storage.
 
 \begin{listing}
 \centering
@@ -318,19 +318,19 @@ rnote over H5T: User conversion callback
     \label{fig:tour-5-uml-datatype-conversion}
 \end{figure}
 
-Listing~\ref{lst:ud-datatype-conversion-direct} creates compound datatypes corresponding to \texttt{src\_t} and \texttt{dst\_t}, and registers \texttt{convert} as a soft conversion function from\texttt{src} to \texttt{dst}. It invokes the library's top-level conversion function \texttt{H5Tconvert}, automatically finding the newly registered conversion function by a path. 
+Listing~\ref{lst:ud-datatype-conversion-direct} creates compound datatypes corresponding to \texttt{src\_t} and \texttt{dst\_t}, and registers \texttt{convert()} as a soft conversion function from\texttt{src} to \texttt{dst}. It invokes the library's top-level conversion function \texttt{H5Tconvert()}, automatically finding the newly registered conversion function by a path. 
 
 Datatype conversion can also be done automatically by the library during writes or reads. Listing~\ref{lst:ud-datatype-conversion-implicit} shows an example of a program where a user-defined conversion between floats is done automatically during a write to a dataset. 
 
-Figure~\ref{fig:tour-5-uml-datatype-conversion} illustrates how type conversion happens during a write to a dataset. The library's internal dataset write function \texttt{H5D\_\_write} initializes datatype information in three phases. The initialization is done in phases due to requirements imposed by parallel I/O. Specifically, when doing parallel I/O, the maximum datatype size across all destination objects must be computed after the first phase, and the selection in the destination datasets must be adjusted after the second phase. 
+Figure~\ref{fig:tour-5-uml-datatype-conversion} illustrates how type conversion happens during a write to a dataset. The library's internal dataset write function \texttt{H5D\_\_write()} initializes datatype information in three phases. The initialization is done in phases due to requirements imposed by parallel I/O. Specifically, when doing parallel I/O, the maximum datatype size across all destination objects must be computed after the first phase, and the selection in the destination datasets must be adjusted after the second phase. 
 
-The first phase of type info initialization, \texttt{H5D\_typeinfo\_init}, populates the \texttt{type\_info} field of each dataset's \texttt{H5D\_dset\_io\_info\_t} structure with the appropriate datatype conversion function, the size of each datatype, and whether this is the special case of converting between compound datatypes that are subsets of one another. Unlike the other phases, the first phase is done separately for each destination dataset. 
+The first phase of type info initialization, \texttt{H5D\_typeinfo\_init()}, populates the \texttt{type\_info} field of each dataset's \texttt{H5D\_dset\_io\_info\_t} structure with the appropriate datatype conversion function, the size of each datatype, and whether this is the special case of converting between compound datatypes that are subsets of one another. Unlike the other phases, the first phase is done separately for each destination dataset. 
 
-The second phase, \texttt{H5D\_\_typeinfo\_init\_phase2}, checks if selection I/O can be used and if the (expected) size of the conversion buffer and background buffer are sufficient to perform the conversion with the given selection. 
+The second phase, \texttt{H5D\_\_typeinfo\_init\_phase2()}, checks if selection I/O can be used and if the (expected) size of the conversion buffer and background buffer are sufficient to perform the conversion with the given selection. 
 
-The third and final phase, \texttt{H5D\_\_typeinfo\_init\_phase3}, allocates a type conversion buffer and a background buffer of appropriate size for each dataset that requires them and did not have them provided through transfer properties.
+The third and final phase, \texttt{H5D\_\_typeinfo\_init\_phase3()}, allocates a type conversion buffer and a background buffer of appropriate size for each dataset that requires them and did not have them provided through transfer properties.
 
-After the type info for the transfer is fully initialized, the write proceeds through a write callback specific to the layout of the target dataset(s). For example, for the program in Listing~\ref{lst:ud-datatype-conversion-implicit}, the dataset's layout is \texttt{H5D\_CONTIGUOUS}, and so the write callback is \texttt{H5D\_\_contig\_write}. To gather elements from the user-provided buffer for contiguous writes to disk, \texttt{H5D\_\_scatgath\_write} is invoked. Type conversion is then performed in the provided buffers right before the data is scattered to the file. 
+After the type info for the transfer is fully initialized, the write proceeds through a write callback specific to the layout of the target dataset(s). For example, for the program in Listing~\ref{lst:ud-datatype-conversion-implicit}, the dataset's layout is \texttt{H5D\_CONTIGUOUS}, and so the write callback is \texttt{H5D\_\_contig\_write()}. To gather elements from the user-provided buffer for contiguous writes to disk, \texttt{H5D\_\_scatgath\_write()} is invoked. Type conversion is then performed in the provided buffers right before the data is scattered to the file. 
 
 
 \subsection{Datatype metadata \& value encodings}
@@ -349,9 +349,9 @@ Recall that committed datatypes must be linked into the file hierarchy. A commit
 
 % \paragraph{Datatype Metadata} A file retains the metadata about a datatype necessary to reconstruct it when reading from the file. The first 8 bytes of a Datatype Message describe the class of the datatype, the size of an instance of the datatype, and some class-specific flags. Because 4 bytes (32 bits) in the message are for the size of a datatype instance, a single element in a dataset or attribute cannot be larger than $2^{32} -1 \approx $ 4 gigabytes. After the first 8 bytes of the message is a properties section without a fixed length, which contains information specific to each datatype class. The specifics of these properties are detailed in the file format documentation.
 
-\paragraph{Datatype Encoding} Datatype encoding is the process of converting an in-memory datatype object (\texttt{H5T\_t}) to a series of bytes which may be written to storage as a Datatype Message. This process may be invoked explicitly by \texttt{H5Tencode/H5Tdecode} or implicitly when writing objects with a datatype to storage. 
+\paragraph{Datatype Encoding} Datatype encoding is the process of converting an in-memory datatype object (\texttt{H5T\_t}) to a series of bytes which may be written to storage as a Datatype Message. This process may be invoked explicitly by \texttt{H5Tencode()/H5Tdecode()} or implicitly when writing objects with a datatype to storage. 
 
-Figure~\ref{fig:tour-5-uml-datatype-encode} shows the library's datatype encodeing process. Some internal routines require a valid \texttt{H5F\_t} file struct but do not modify or depend on a real external file. To support datatype encoding/decoding without a real associated file, \texttt{H5F\_fake\_alloc} creates a 'fake' file struct with no counterpart in storage. The size of the message to create is determined by \texttt{H5O\_msg\_raw\_size}, which invokes the Datatype Message class's  'size' callback, \texttt{H5O\_\_dtype\_size}. Similarly. the generic \texttt{H5O\_msg\_encode} invokes the Datatype Message class's encode callback, \texttt{H5O\_\_dtype\_encode}. This encode callback populates the provided buffer with information from the datatype. Suppose the datatype is non-atomic; recursive calls to \texttt{H5O\_\_dtype\_encode\_helper} populate each component datatype. For compound types, a separate recursive call encodes each member field. A single recursive call is used to encode the base type for arrays, variable-length types, and enums.
+Figure~\ref{fig:tour-5-uml-datatype-encode} shows the library's datatype encoding process. Some internal routines require a valid \texttt{H5F\_t} file struct but do not modify or depend on a real external file. To support datatype encoding/decoding without a real associated file, \texttt{H5F\_fake\_alloc()} creates a 'fake' file struct with no counterpart in storage. The size of the message to create is determined by \texttt{H5O\_msg\_raw\_size()}, which invokes the Datatype Message class's  'size' callback, \texttt{H5O\_\_dtype\_size()}. Similarly, the generic \texttt{H5O\_msg\_encode()} invokes the Datatype Message class's encode callback, \texttt{H5O\_\_dtype\_encode()}. This encode callback populates the provided buffer with information from the datatype. Suppose the datatype is non-atomic; recursive calls to \texttt{H5O\_\_dtype\_encode\_helper()} populate each component datatype. For compound types, a separate recursive call encodes each member field. A single recursive call is used to encode the base type for arrays, variable-length types, and enums.
 
 \begin{comment}
 http://www.plantuml.com/plantuml/

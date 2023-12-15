@@ -174,8 +174,14 @@
 \renewcommand*\date[1]{\gdef\@date{#1}\global\let\thedate\@date}%
 \newcommand*\rfcversion[1]{\gdef\@rfcversion{#1}\global\let\therfcversion\@rfcversion}%
 
-\newcommand{\FUN}[1]{\texttt{#1}}
-\newcommand{\FIL}[1]{\texttt{#1}}
+%
+%\usepackage[scaled=.95]{inconsolata}
+\usepackage[scaled=.9]{}
+\usepackage[T1]{fontenc}
+
+% USE FOR FUNCTION NAMES: INGNORES "_" and and "()" to the end of the input
+\usepackage[nohyphen]{underscore}
+\newcommand{\func}[1]{\texttt{#1()}}
 
 %% Re-define \organization and \orglogo to store their args in \theorganization and \theorglogo
 \newcommand*\organization[1]{\gdef\@organization{#1}\global\let\theorganization\@organization}
@@ -243,8 +249,9 @@
 
 %% Code listings
 \RequirePackage{minted}
-\usemintedstyle{manni}
 
+\usemintedstyle{manni}
+\setminted{fontsize=\small}
 % Float package
 \RequirePackage{float}
 

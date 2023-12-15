@@ -86,7 +86,7 @@ none (\texttt{H5}) & General use or library-wide routines \\
 \end{table}
 
 As described in~\cite{libhdf5-dev-101}, HDF5 library packages contain functions with different scopes or visibilities for the API and other packages (public, private, package).
-The answer to the question of which package uses which other packages' public functions can be found in Table~\ref{table:pub-mod-dep}. A dot in a cell indicates that the package listed in the row heading uses private functions from the package listed in the column heading. For example, the dot (\textbullet) in the cell at position row \texttt{A} and column \texttt{E} indicates that the package \texttt{H5A} uses functions from the package \texttt{H5E}.
+The answer to the question of which package uses which other packages' public functions can be found in Table~\ref{table:pub-mod-dep}. A dot in a cell indicates that the package listed in the row heading uses private functions from the package listed in the column heading. For example, the dot (\textbullet) in the cell at position row \texttt{A} and column \texttt{I} indicates that the package \texttt{H5A} uses public functions from the package \texttt{H5I}.
 
 \begin{table}
   \centering

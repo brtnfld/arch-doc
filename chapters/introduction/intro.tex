@@ -2,14 +2,14 @@
 %|  Name  | TODO | ONGOING | DONE |
 %|--------|------|---------|------|
 %| Dana   | x    |         |      |
-%| Gerd   | x    |         |      |
+%| Gerd   |      |         |  x   |
 %| Glenn  | x    |         | x    |
 %| Jordan | x    |         |      |
 %| Luke   | x    |         |      |
 %| Matt   |      |         | x    |
 %| Neil   | x    |         |      |
 %| Scot   | x    |        |   x   |
-\chapter{Introduction}
+
 This document is intended to provide a detailed and in-depth understanding of how the HDF5 library operates. It delves into the underlying principles of the library and examines its systemic, structural, and orderly aspects responsible for its clear and informative functioning. Anyone going through this document can gain valuable insights into the library’s architecture and learn how to use it efficiently. Furthermore, it provides an overview of various techniques that can be used to simplify the understanding of the operations of the HDF5 library, making it easier to work with and more accessible for users of all levels of expertise.
 
 \section{Audience and Goals}
@@ -52,7 +52,7 @@ The black box responds to stimuli in two forms: storage management and block IO 
 
 When observing the stimulus/response ``traffic" of even simple applications, the correlation is much weaker and less direct than we might expect and sometimes outright counter-intuitive (e.g., an input operation triggering an output operation). Unlike a mathematical function, which consistently produces the same outputs for the same inputs, the relation between stimuli and responses exhibited by the HDF5 library is non-functional, albeit deterministic. This is due to the HDF5 library's role as a translator between HDF5 model idioms, represented in memory, and storage idioms. To be effective and efficient, and to bridge the speed differential between memory and storage, the HDF5 library maintains a state. This state dilutes the simple stimulus/response logic and manifests itself in what might appear as a delayed response or an aggregate response to a sequence of stimuli.
 
-The architecture of a system or software is usually presented in models that fall under different perspectives or views, such as the ones shown in table~\ref{table:perspectives}.
+The architecture of a system or software is usually presented in models that fall under different perspectives or views, such as the ones shown in Table~\ref{table:perspectives}.
 
 \begin{table}[h!]
 \begin{tabular}{||c|l||}
@@ -131,10 +131,14 @@ The implementation is guided by the following values, which are listed in no par
     \end{itemize}
 \end{description}
 
+\section{How this document is organized}
+
+This document has three parts. Part one is a set of guided tours that are used to uncover architectural elements, but without going into too much detail. The second part, currently a fragment, is meant as a reflection on problems in the HDF5 library architecture. Part three is a reference section, where specific architectural elements are explored in greater detail, in some cases, for the first time, in non-source code form.
+
 \section{Typographic conventions}
 
 \begin{itemize}
     \item[\textbf{bold}] headers, titles
     \item[\textit{italic}] emphasis
-    \item[\texttt{monospace}] Source code, package names, configuration file settings, file system paths and folder names.
+    \item[\texttt{monospace}] source code, package names, configuration file settings, file system paths and folder names.
 \end{itemize}

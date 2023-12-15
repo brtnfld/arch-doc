@@ -3,12 +3,12 @@
 %|--------|------|---------|------|
 %| Dana   | x    |         |      |
 %| Gerd   | x    |         |      |
-%| Glenn  | x    |         |      |
+%| Glenn  |      |   x     |      |
 %| Jordan | x    |         |      |
 %| Luke   | x    |         |      |
 %| Matt   | x    |         |      |
 %| Neil   | x    |         |      |
-%| Scot   | x    |         |      |
+%| Scot   | x    |         |   x   |
 
 
 % \subsection{VOL Connectors}
@@ -47,14 +47,14 @@ The language bindings maintain their source, tests, and examples in isolation fr
 
 \subsubsection{Fortran\label{subsec:Fortran}}
 
-The Fortran wrappers can be found in \textit{fortran/src} in the HDF5 source code. The HDF5 modules topics are mapped to the corresponding
+The Fortran wrappers can be found in \textit{fortran/src} in the HDF5 source code. The HDF5 modules topics are mapped to their corresponding
 \emph{H5{[}}\textbf{\textsl{A}},\textbf{\textsl{D}},\textbf{\textsl{S}},\textbf{\textsl{T}},\textbf{\textsl{E}},\textbf{\textsl{ES}},\textbf{\textsl{F}},\textbf{\textsl{Z}},\textbf{\textsl{G}},\textbf{\textsl{I}},\textbf{\textsl{L}},\textbf{\textsl{O}},\textbf{\textsl{P}},\textbf{\textsl{R}},\textbf{\textsl{VL}}\emph{{]}ff.F90} files, where \textbf{\textsl{A}}-- Attribute, \textbf{\textsl{D}} -- Dataset, \textbf{\textsl{S}} -- Dataspace, \textbf{\textsl{T}}
 -- Datatype, \textbf{\textsl{E}} -- Error handing, \textbf{\textsl{ES}} -- Event Set, \textbf{\textsl{F}} -- Files, \textbf{\textsl{Z}} -- Filters, \textbf{\textsl{G}} -- Groups, \textbf{\textsl{I}} -- Identifiers,  $\varnothing$ -- Library General, \textbf{\textsl{L}} --Links, \textbf{\textsl{O}} -- Objects, \textbf{\textsl{P}} -- Property
 List, \textbf{\textsl{R}} -- References, \textbf{\textsl{VL}} --VOL connector. The older Fortran wrappers currently call a C wrapper
 to call the C APIs from. The C wrappers are located in \emph{H5}\textbf{\textsl{{[}A}},\textbf{\textsl{D}},\textbf{\textsl{S}},\textbf{\textsl{T}},\textbf{\textsl{E}},\textbf{\textsl{ES}},\textbf{\textsl{F}},\textbf{\textsl{Z}},\textbf{\textsl{G}},\textbf{\textsl{I}},\textbf{\textsl{L}},\textbf{\textsl{O}},\textbf{\textsl{P}},\textbf{\textsl{R}},\textbf{\textsl{VL}}\emph{{]}f.c}.
-Recent wrapper development, however, forgo calling intermediate C stubs and calls the C APIs directly from Fortran. The idea is to eliminate the necessity of the intermediate C wrappers eventually using Fortran 2003 (F2003) and Fortran 2008 (F2008) features.
+Recent wrapper development, however, forgo calling intermediate C stubs and calls the C APIs directly from Fortran. The idea is to eliminate the necessity of the intermediate C wrappers, eventually using Fortran 2003 (F2003) and Fortran 2008 (F2008) features.
 
-The F2003 and F2008 standards have simplified the interoperability between the C and the Fortran wrappers to a great extent. The Fortran wrappers take full advantage of this feature, which has improved their portability with the main C HDF5 library, reduced the development time invested in Fortran, and made it easier to maintain them. These improvements were incorporated into the HDF5 library, starting with the 1.10 release.
+The F2003 and F2008 standards have simplified the interoperability between the C and the Fortran wrappers to a great extent. The Fortran wrappers take full advantage of this feature, which has improved their portability with the main C HDF5 library, reduced development time invested in Fortran, and made it easier to maintain them. These improvements were incorporated into the HDF5 library, starting with the 1.10 release.
 The following features of F2003 and F2008 are commonly used, and their availability is required for the wrappers:
 \begin{itemize}
     \item The \texttt{ISO\_C\_BINDING} and \texttt{ISO\_FORTRAN\_ENV} modules are used.
@@ -63,7 +63,7 @@ The following features of F2003 and F2008 are commonly used, and their availabil
 \end{itemize}
 With these new features, most, if not all, of the C wrappers can be eliminated by calling the HDF5 C APIs directly from the Fortran wrappers. 
 
-Lastly, the Fortran wrappers avoid modifying a user's buffer and tries to minimize memory copies and allocations whenever possible. Consequently, when a C application reads data written from a Fortran program, the data appears to be transposed due to the difference in the storage order between C (row-major) and Fortran (column-major). For instance, if Fortran writes a 4x6 two-dimensional dataset to a file, a C program will read it into memory as a 6x4 two-dimensional dataset. It is worth noting that the HDF5 C utilities \textit{h5dump} and \textit{h5ls} display transposed data when data is written from a Fortran program. 
+Lastly, the Fortran wrappers avoid modifying a user's buffer and try to minimize memory copies and allocations whenever possible. Consequently, when a C application reads data written from a Fortran program, the data appears to be transposed due to the difference in the storage order between C (row-major) and Fortran (column-major). For instance, if Fortran writes a 4x6 two-dimensional dataset to a file, a C program will read it into memory as a 6x4 two-dimensional dataset. It is worth noting that the HDF5 C utilities \textit{h5dump} and \textit{h5ls} display transposed data when data is written from a Fortran program. 
 
 An overview of the files, file generation, and other Fortran wrapper development practices are updated and detailed in \textit{README.md}, located in \textit{fortran/src}.
 
@@ -83,35 +83,35 @@ Additional supporting Java infrastructure can be found in the following files/di
   \item \texttt{java/src/hdf/hdf5lib/H5.java} \\
     In addition to containing the Java wrapper function declarations, this file also contains
     code (in \texttt{loadH5Lib}) to load the C library that contains all of the JNI C functions
-    which implement the Java wrapper functions. This code is run when the \texttt{H5} class is
+    that implement the Java wrapper functions. This code is run when the \texttt{H5} class is
     initialized and must successfully find and load the C library for the Java wrappers to
     operate correctly.
   \item \texttt{java/src/hdf/hdf5lib/HDF5Constants.java} \\
     This file defines a Java class that contains public variables for all of the constants that
     are available in the public C interface, usually as a \#define macro, such as
-    \texttt{H5F\_LIBVER\_LATEST}. Each variable has a name matching the corresponding macro in
-    the C library and the value for each variable is populated by having a similarly-named
+    \texttt{H5F\_LIBVER\_LATEST}. Each variable has a name matching its corresponding macro in
+    the C library, and the value for each variable is populated by having a similarly named
     JNI C function that simply returns the relevant value.
   \item \texttt{java/src/hdf/hdf5lib/HDFArray.java} \\
-    This file defines functions to handle converting multi-dimensional arrays of bytes into
+    This file defines functions to convert multi-dimensional arrays of bytes into
     arrays of Java objects and vice versa. Its main goal is to facilitate and simplify the
     I/O pathway between Java and C.
   \item \texttt{java/src/hdf/hdf5lib/HDFNativeData.java} \\
     This file defines Java wrapper functions for methods that support \texttt{HDFArray.java}
     during the data element conversion process. 
   \item \texttt{java/src/hdf/hdf5lib/callbacks} \\
-    This directory contains source files that define Java interfaces, functions, etc. necessary
+    This directory contains source files that define Java interfaces, functions, etc., necessary
     for being able to make a call from Java to an HDF5 API that accepts a pointer to a callback
     function, such as \texttt{H5Aiterate2} (which accepts an \texttt{H5A\_operator2\_t}).
   \item \texttt{java/src/hdf/hdf5lib/exceptions} \\
-    This directory contains source files that define Java classes which represent errors that
+    This directory contains source files defining Java classes representing errors that
     can be returned from the HDF5 Java wrappers. The main error class defined is the \texttt{HDF5Exception}
-    class, which extends Java's \texttt{RuntimeException}. From this class two other
-    error classes are derived, \texttt{HDF5LibraryException} and \texttt{HDF5JavaException}, from which several
-    other error classes are derived in turn. Errors derived from the \texttt{HDF5LibraryException} class
+    class, which extends Java's \texttt{RuntimeException}. Two other
+    error classes are derived from this class, \texttt{HDF5LibraryException} and \texttt{HDF5JavaException}, from which several
+    other error classes are derived. Errors derived from the \texttt{HDF5LibraryException} class
     correspond to errors that can be returned from the HDF5 API, while errors derived from the
-    \texttt{HDF5JavaException} class correspond to errors that occur in the Java wrapper functions
-    and supporting infrastructure, or in the JNI C code which implements the Java wrapper functions.
+    \texttt{HDF5JavaException} class corresponds to errors that occur in the Java wrapper functions
+    and supporting infrastructure or in the JNI C code that implements the Java wrapper functions.
   \item \texttt{java/src/hdf/hdf5lib/structs} \\
     This directory contains source files that define Java classes which represent the C structures
     passed to certain HDF5 API calls, such as the \texttt{H5O\_info\_t} structure for \texttt{H5Oget\_info}.
@@ -152,7 +152,7 @@ Java_hdf_hdf5lib_H5_H5Dread(JNIEnv *env, jclass clss,
 
 \texttt{JNIEnv *env} is a special parameter passed to each JNI C function by the JNI itself and
 is used to call C APIs that allow direct interaction with Java objects. \texttt{jclass clss} is
-also a special parameter passed to each JNI C function by the JNI, but is mostly unused. For the
+also a special parameter passed to each JNI C function by the JNI but is mostly unused. For the
 other parameters, one can refer to \href{https://docs.oracle.com/en/java/javase/17/docs/specs/jni/types.html}{JNI Types and Data Structures}
 when translating between Java types and JNI types.
 
@@ -160,18 +160,17 @@ HDF5 JNI C functions are typically implemented as very thin wrappers around the 
 simple argument checking is performed upon function entry, any necessary argument pinning may occur
 (described below), the relevant HDF5 C API call is made with the parameters passed to the wrapper
 function and then some cleanup is performed before returning from the function. Error handling in
-HDF5 JNI C functions is very similar in design to the HDF5 C library. Each function has a 'done:'
-label and a set of macros is used to jump to this label with \texttt{goto} when an error occurs.
+HDF5 JNI C functions are very similar in design to the HDF5 C library. Each function has a 'done:'
+label, and a set of macros is used to jump to this label with \texttt{goto} when an error occurs.
 Once an error occurs, these macros will construct an instance of the corresponding HDF5 Java exception
-class mentioned above and return that exception to the Java interface so it can be handled in an
-appropriate manner. If not handled at the Java interface level, the Java Virtual Machine may crash.
+class mentioned above and return that exception to the Java interface so it can be handled appropriately. If not handled at the Java interface level, the Java Virtual Machine may crash.
 
 Due to the fairly large overhead incurred when crossing the boundary between Java and C code, there
-are a few best practices one should following when designing new HDF5 JNI C functions:
+are a few best practices one should follow when designing new HDF5 JNI C functions:
 
 \begin{itemize}
   \item HDF5 Java wrapper functions should generally be designed such that the number of transitions
-  between Java and C code to accomplish a task can be minimized and as much work as possible can be
+  between Java and C code to accomplish a task is minimized and as much work as possible is
   done within the C code portion of the wrapper function.
   \item To reduce the overhead of accessing Java array objects within C code, the JNI provides a
   process typically referred to as "pinning". This allows one to "pin" an array and get a direct
@@ -180,13 +179,13 @@ are a few best practices one should following when designing new HDF5 JNI C func
   the relevant JNI calls to pin arrays of each primitive datatype, such as \texttt{PIN\_INT\_ARRAY},
   \texttt{PIN\_INT\_ARRAY\_CRITICAL} and \texttt{UNPIN\_INT\_ARRAY}. These macros will return a pointer
   to the pinned array, as well as a boolean value that informs the caller whether the JNI had to make
-  a copy of the array in order to properly pin it. If a copy had to be made, the caller \textbf{must}
+  a copy of the array in order to pin it properly. If a copy had to be made, the caller \textbf{must}
   be sure to call the matching "unpin" macro (e.g., \texttt{UNPIN\_INT\_ARRAY}) before returning from
-  the wrapper function. Otherwise, any changes made to the array will not be reflected and any resources
+  the wrapper function. Otherwise, any changes to the array will not be reflected, and any resources
   used by the copied array will not be released. If performance is of the utmost importance in a wrapper
   function that deals with array objects, one may use the "critical" versions of these pinning macros
-  rather than the regular versions. This approach will be more likely to give the caller an uncopied
-  version of the array in question, but there are restrictions around when and how these particular
+  rather than the regular versions. This approach will more likely give the caller an uncopied
+  version of the array in question. Still, there are restrictions around when and how these particular
   macros can be used that the caller should be aware of (see \href{https://docs.oracle.com/en/java/javase/17/docs/specs/jni/functions.html#getprimitivearraycritical-releaseprimitivearraycritical}{GetPrimitiveArrayCritical, ReleasePrimitiveArrayCritical}).
   Further information around this pinning process can be found at \href{https://docs.oracle.com/en/java/javase/17/docs/specs/jni/design.html#accessing-primitive-arrays}{Accessing Primitive Arrays}
   and \href{https://docs.oracle.com/en/java/javase/17/docs/specs/jni/functions.html#getprimitivetypearrayelements-routines}{Get$<$PrimitiveType$>$ArrayElements Routines}.

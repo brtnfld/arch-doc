@@ -3,7 +3,7 @@
 %|--------|------|---------|------|
 %| Dana   | x    |         |      |
 %| Gerd   |      |         | x    |
-%| Glenn  | x    |         |      |
+%| Glenn  |      |         |   x  |
 %| Jordan | x    |         |      |
 %| Luke   | x    |         |      |
 %| Matt   |      |         |  x   |
@@ -60,7 +60,7 @@ We already encountered the metadata cache in tours~\ref{sec:tour2} and~\ref{sec:
 
 \subsection{The mighty metadata cache (MDC)}
 
-To simulate the impact of an improperly configured (or altogether absent) MDC, we perform a set of metadata-intensive operations and arbitrarily ``throttle" the MDC via \texttt{H5Pset\_mdc\_config} as shown in listing~\ref{lst:no-mdc}. The code creates and then deletes 50,000 subgroups in separate loops and then creates another 25,000 subgroups. Most of the metadata will be local heaps and symbol tables from all these groups. Running the code with the \texttt{throttle} argument curtails the metadata cache size to 1KiB. With the throttled configuration, the code runs more than five times slower than the default configuration. Reviewing the Callgrind profile, this increase is almost proportional to the increase in \texttt{H5C\_\_flush\_single\_entry} calls from \texttt{H5C\_\_make\_space\_in\_cache} (429,136 to 1,873,837 with \texttt{throttle}).
+To simulate the impact of an improperly configured (or altogether absent) MDC, we perform a set of metadata-intensive operations and arbitrarily ``throttle" the MDC via \texttt{H5Pset\_mdc\_config()} as shown in listing~\ref{lst:no-mdc}. The code creates and then deletes 50,000 subgroups in separate loops and then creates another 25,000 subgroups. Most of the metadata will be local heaps and symbol tables from all these groups. Running the code with the \texttt{throttle} argument curtails the metadata cache size to 1KiB. With the throttled configuration, the code runs more than five times slower than the default configuration. Reviewing the Callgrind profile, this increase is almost proportional to the increase in \texttt{H5C\_\_flush\_single\_entry()} calls from \texttt{H5C\_\_make\_space\_in\_cache()} (429,136 to 1,873,837 with \texttt{throttle}).
 
 \begin{listing}
 \centering
@@ -115,7 +115,7 @@ int main(int argc, char** argv) {
 
 \subsubsection{Contiguous data cache (a.k.a. data sieve buffer)}
 
-Data sieving~\cite{thakur1999} is a common technique to make a few large, contiguous requests to the file system, even if the user’s request consists of several small, non-contiguous accesses, e.g., point or hyperslab selections. The native VOL uses this technique for datasets with contiguous layouts. The definition of the so-called `raw data contiguous data cache' can be found in \texttt{H5Dpkg.h} and is repeated in listing~\ref{lst:rdcdc}. \texttt{sieve\_loc} is the offset of the sieve in the HDF5 file, \texttt{sieve\_size} is the used size of the total \texttt{sieve\_buf\_size}, and \texttt{sieve\_dirty} tracks the sieve buffer's modification status. The sieve buffer size can be controlled at the file level(!) via \texttt{H5Pset\_sieve\_buf\_size}.
+Data sieving~\cite{thakur1999} is a common technique to make a few large, contiguous requests to the file system, even if the user’s request consists of several small, non-contiguous accesses, e.g., point or hyperslab selections. The native VOL uses this technique for datasets with contiguous layouts. The definition of the so-called `raw data contiguous data cache' can be found in \texttt{H5Dpkg.h} and is repeated in listing~\ref{lst:rdcdc}. \texttt{sieve\_loc} is the offset of the sieve in the HDF5 file, \texttt{sieve\_size} is the used size of the total \texttt{sieve\_buf\_size}, and \texttt{sieve\_dirty} tracks the sieve buffer's modification status. The sieve buffer size can be controlled at the file level(!) via \texttt{H5Pset\_sieve\_buf\_size()}.
 
 \begin{listing}
 \centering
@@ -136,7 +136,7 @@ typedef struct H5D_rdcdc_t {
 
 The chunk cache is defined as struct \texttt{H5D\_rdcc\_t} in \texttt{H5Dpkg.h}, and the definition is too long to be reproduced here. Like most caches, it has a set of slots for cache entries, an auxiliary doubly-linked list to implement an eviction strategy based on LRU or similar, and performance counters for statistics.
 
-To see the chunk cache in action and the side effects of an undersized chunk cache, we have created the example in listing~\ref{lst:no-ccache}. In this example, we update single elements on different chunks, forcing chunk cache evictions if the chunk cache cannot hold all chunks. The dataset has 1,048,576 32-bit integer elements allocated across four chunks. The default chunk cache size is 1MiB, which can hold a single chunk. In every loop iteration, we update an element on a different chunk, evicting the current chunk. Passing the \texttt{cache-all} argument to the program increases the chunk cache to 4MiB, which can hold all four chunks in the chunk cache without evictions. The Callgrind profiles' main difference is 100 calls to \texttt{H5D\_\_chunk\_cache\_prune} with the default (undersized) chunk cache, which we expected. Because of the OS's page cache, the actual performance difference is negligible for the small chunk sizes in this example. However, this would not be true for larger datasets, chunks, other access patterns, and system loads.
+To see the chunk cache in action and the side effects of an undersized chunk cache, we have created the example in listing~\ref{lst:no-ccache}. In this example, we update single elements on different chunks, forcing chunk cache evictions if the chunk cache cannot hold all chunks. The dataset has 1,048,576 32-bit integer elements allocated across four chunks. The default chunk cache size is 1MiB, which can hold a single chunk. In every loop iteration, we update an element on a different chunk, evicting the current chunk. Passing the \texttt{cache-all} argument to the program increases the chunk cache to 4MiB, which can hold all four chunks in the chunk cache without evictions. The Callgrind profiles' main difference is 100 calls to \texttt{H5D\_\_chunk\_cache\_prune()} with the default (undersized) chunk cache, which we expected. Because of the OS's page cache, the actual performance difference is negligible for the small chunk sizes in this example. However, this would not be true for larger datasets, chunks, other access patterns, and system loads.
 
 \begin{listing}
 \centering
@@ -180,13 +180,13 @@ int main(int argc, char** argv)
 
 In HDF5 library release 1.10.0, a new file space management strategy, \textit{paged aggregation}, that aggregates small metadata and raw data allocations into constant-sized, well-aligned pages was introduced~\cite{rfc20120523}. Paged aggregation combined with \textit{page buffering}~\cite{rfc20150709} allows more efficient I/O accesses.
 
-To see the paged aggregation/page buffering combination in action, we have modified listing~\ref{lst:no-ccache} and updated the file creation and access property lists to arrive at listing~\ref{lst:pages}. We have updated the behavior of the \texttt{cache-all} argument to bump the page buffer size from 1MiB to 8MiB. The latter can accommodate all file pages. Again, looking at the differences in the Callgrind profiles, the differences are clear to see. A good measure of the effectiveness of paged aggregation and page buffering is to look at the number of \texttt{H5PB[read,write]} and \texttt{pwrite} calls.
+To see the paged aggregation/page buffering combination in action, we have modified listing~\ref{lst:no-ccache} and updated the file creation and access property lists to arrive at listing~\ref{lst:pages}. We have updated the behavior of the \texttt{cache-all} argument to bump the page buffer size from 1MiB to 8MiB. The latter can accommodate all file pages. Again, looking at the differences in the Callgrind profiles, the differences are clear to see. A good measure of the effectiveness of paged aggregation and page buffering is to look at the number of \texttt{H5PB[read,write]()} and \texttt{pwrite()} calls.
 
-\texttt{H5PBwrite} writes data into the page buffer. If the page exists in the cache, update it; otherwise, read it from the disk, update it, and insert it into the cache.
+\texttt{H5PBwrite()} writes data into the page buffer. If the page exists in the cache, update it; otherwise, read it from the disk, update it, and insert it into the cache.
 
-\texttt{H5PBread} reads in the data from the page containing it if it exists in the page buffer; otherwise, it reads the page through the VFD.
+\texttt{H5PBread()} reads in the data from the page containing it if it exists in the page buffer; otherwise, it reads the page through the VFD.
 
-The number of \texttt{pwrite} calls indicates the I/O traffic the OS sees from the application.
+The number of \texttt{pwrite()} calls indicates the I/O traffic the OS sees from the application.
 
 \begin{listing}
 \centering
@@ -238,9 +238,9 @@ int main(int argc, char** argv)
 
 The call counts without and with the \texttt{cache-all} argument are shown in parentheses.
 \begin{itemize}
-    \item \texttt{H5PBwrite} (114 / 18)
-    \item \texttt{H5PBread} (96 / 0)
-    \item \texttt{pwrite} (102 / 6)
+    \item \texttt{H5PBwrite()} (114 / 18)
+    \item \texttt{H5PBread()} (96 / 0)
+    \item \texttt{pwrite()} (102 / 6)
 \end{itemize}
 
 The drop in call counts is significant. Again, depending on the problem size, the effectiveness of the OS page cache will intervene, and the actual performance difference between the two scenarios may not be near what the counts suggest.

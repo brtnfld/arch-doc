@@ -2,7 +2,7 @@
 %|  Name  | TODO | ONGOING | DONE |
 %|--------|------|---------|------|
 %| Dana   | x    |         |      |
-%| Gerd   | x    |         |      |
+%| Gerd   |      |   x     |      |
 %| Glenn  | x    |         |      |
 %| Jordan | x    |         |      |
 %| Luke   | x    |         |      |
@@ -11,37 +11,49 @@
 %| Scot   | x    |         |      |
 
 
-\todo[inline]{Owner: Neil -- Priority: Medium -- Effort: M -- Completion: 0\%}
+%\todo[inline]{Owner: Neil -- Priority: Medium -- Effort: M -- Completion: 0\%}
 
-What problems are there with the current architecture?
+The purpose of this section is to collect and document known \textit{architectural} issues in the HDF5 library. For now, this is more of a placeholder, but not because there aren't any known issues. It's hard to figure out where to start. So, watch this space!
 
-\section{C-API Issues}
+Perhaps a good starting point would be to approach this topic from the perspective of flexibility~\cite{hanson2021} or extensibility~\cite{Woods2018}. How has the HDF5 library architecture changed over 25 years? What drove those changes? Were they graceful or at least successful?
 
-\begin{itemize}
-    \item Inadequate error reporting mechanisms
-    \begin{itemize}
-        \item Usually just -1, \texttt{FAIL}, or \texttt{H5I\_INVALID\_HID} (no fine-grained error codes)
-        \item Parsing error stacks is complicated and doesn't work well due to inconsistent major/minor error values
-    \end{itemize}
-\end{itemize}
+\begin{quote}
+    ``Our goal in this book is to investigate how to construct computational systems so that they can be easily adapted to changing requirements. One should not have to modify a working program. One should be able to add to it to implement new functionality or to adjust old functions for new requirements. We call this \textit{additive programming}. We explore techniques to add functionality to an existing program without breaking it. Our techniques do not guarantee that the additions are correct: the additions must themselves be debugged; but they should not damage existing functionality accidentally."~\cite{hanson2021}
+\end{quote}
 
-\section{VOL Issues}
+What are the ``multiplicative" elements in the HDF5 library architecture?
 
-\begin{itemize}
-    \item Limited VOL capability introspection
-\end{itemize}
+Looking at the partial chronology in Appendix~\ref{app:chronology}, how many of those features have made the HDF5 library a better product?
 
-\section{Non-VOL (Infrastructure) Issues}
+What is the scale of accumulated technical debt in the code base, and what fraction is due to poor architecture?
 
-\begin{itemize}
-    \item Entanglement with the native VOL
-    \item Multi-threading
-\end{itemize}
+% \section{C-API Issues}
 
-\section{Native VOL Issues}
+% \begin{itemize}
+%     \item Inadequate error reporting mechanisms
+%     \begin{itemize}
+%         \item Usually just -1, \texttt{FAIL}, or \texttt{H5I\_INVALID\_HID} (no fine-grained error codes)
+%         \item Parsing error stacks is complicated and doesn't work well due to inconsistent major/minor error values
+%     \end{itemize}
+% \end{itemize}
 
-\begin{itemize}
-    \item Obscure defaults/lack of configurability
-    \item Poor encapsulation (generally only at the package level)
-    \item Lots of small I/O operations maps poorly to high-performance I/O systems
-\end{itemize}
+% \section{VOL Issues}
+
+% \begin{itemize}
+%     \item Limited VOL capability introspection
+% \end{itemize}
+
+% \section{Non-VOL (Infrastructure) Issues}
+
+% \begin{itemize}
+%     \item Entanglement with the native VOL
+%     \item Multi-threading
+% \end{itemize}
+
+% \section{Native VOL Issues}
+
+% \begin{itemize}
+%     \item Obscure defaults/lack of configurability
+%     \item Poor encapsulation (generally only at the package level)
+%     \item Lots of small I/O operations maps poorly to high-performance I/O systems
+% \end{itemize}

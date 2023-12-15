@@ -74,7 +74,8 @@
 \printglossary
 
 % Main text of the document
-\include{chapters/introduction/intro}
+\chapter{Introduction}
+\input{chapters/introduction/intro}
 
 \chapter{Guided Tours}\label{part:tours}
 \input{chapters/tours/intro}
@@ -104,11 +105,12 @@
 \include{chapters/tours/tour8}
 
 \chapter{Architectural Overview}\label{chap:arch}
-\include{chapters/architecture/overview}
+\input{chapters/architecture/overview}
 \section{Architectural Problems}\label{sec:problems}
-\include{chapters/architecture/problems}
+\input{chapters/architecture/problems}
 
 \chapter{Reference}\label{part:reference}
+\input{chapters/reference/intro}
 
 \section{Modules}
 \input{chapters/reference/modules}
@@ -133,12 +135,11 @@
 \chapter{Feature chronology}\label{app:chronology}
 \input{chapters/appendix/chronology}
 
-\chapter{Feature (in-)compatibility matrix}\label{app:feat-compat}
-\include{chapters/appendix/matrix}
+\chapter{Feature (in-)compatibility}\label{app:feat-compat}
+\input{chapters/appendix/matrix}
 
-
-%CLEANUP\chapter{Environment}\label{app:environment}
-%CLEANUP\include{chapters/appendix/setup}
+\chapter{Environment}\label{app:environment}
+\input{chapters/appendix/setup}
 
 %\chapter{Stories}\label{app:stories}
 %\include{chapters/appendix/stories}
