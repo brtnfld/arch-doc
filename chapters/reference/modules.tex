@@ -35,7 +35,7 @@ The file memory management module \texttt{H5MF} is one of the major clients of t
 
 If the filespace management strategy is \texttt{H5F\_FSPACE\_STRATEGY\_FSM\_AGGR} or \\ \texttt{H5F\_FSPACE\_STRATEGY\_AGGR}, then small memory allocation requests are handled by two aggregators - one for raw data, and one for metadata. Aggregators are represented in memory with the \texttt{H5F\_blk\_aggr\_t} struct. Each aggregator maintains an 'allocation block' used to satisfy small memory requests of the appropriate type. This grouping of small sections of data into larger blocks prevents tiny, scattered accesses, improving performance substantially when compared to unmanaged filespace allocation. If an aggregator does not have enough space in its current allocation block to satisfy an allocation request, the file is extended to satisfy the request. This extension also occurs whenever an allocation request exceeds the size of an allocation block.
 
-While the allocation blocks created by the aggregators are an improvement over naive allocation, the allocation blocks have some issues themselves. The blocks are not page aligned, and the allocation blocks themselves end up scattered randomly through the file. These issues are addressed by paged aggregation.  
+While the allocation blocks created by the aggregators are an improvement over naive allocation, the allocation blocks have some issues themselves. The blocks are not page aligned, and the allocation blocks themselves end up scattered randomly through the file. These issues are addressed by paged aggregation.
 
     \item Paged Aggregation
 
@@ -51,7 +51,7 @@ If persistent free space tracking is enabled, \Glspl{fsm} are written to the fil
 
 Self-referential \Glspl{fsm} must be settled after all non-self-referential \Glspl{fsm}. Self-referential-\Glspl{fsm} are resolved in a slightly modified way to avoid two potential infinite loops. The first infinite loop would be allocating space for an \Gls{fsm} that is eventually found to contain no free space sections. This space would then need to be de-allocated again (because empty \Glspl{fsm} are not written to the file), potentially triggering an infinite loop. The second possible infinite loop would be allocating space for a free section info block and, in the process, increasing the size of that free section info block. This would necessitate reallocating that info block, potentially leading to an infinite loop. These loops are avoided by changing the settling process for self-referential \Glspl{fsm} in two ways. First, empty self-referential \Glspl{fsm} are written to the file, unlike empty non-self-referential \Glspl{fsm}. Second, free section info blocks for self-referential \Glspl{fsm} can be oversized.
 
-Settling self-referential \Glspl{fsm} requires saving the \gls{eoa} to file. Because the split and multi-file drivers work with multiple files, resulting in numerous valid \glspl{eoa}, persistent filespace management is not supported with those VFDs. 
+Settling self-referential \Glspl{fsm} requires saving the \gls{eoa} to file. Because the split and multi-file drivers work with multiple files, resulting in numerous valid \glspl{eoa}, persistent filespace management is not supported with those VFDs.
 
 \end{itemize}
 
@@ -78,9 +78,9 @@ Implementing the free list interface through macros allows the free list operati
 
 \item In-memory objects
 
-The library has four main types of free lists: 'regular' free lists for single internal data structures, array free lists for arrays of internal data structures, block free lists for arbitrarily sized blocks of bytes, and factory free lists for fixed-size blocks of bytes. Each of these free list types has its own set of structs used to represent it in the library. 
+The library has four main types of free lists: 'regular' free lists for single internal data structures, array free lists for arrays of internal data structures, block free lists for arbitrarily sized blocks of bytes, and factory free lists for fixed-size blocks of bytes. Each of these free list types has its own set of structs used to represent it in the library.
 
-Each free list type has a head struct (\texttt{H5FL\_<type>\_head\_t}) that acts as the head of the free list. This head points to a list of free blocks that are all of the same fixed size. Each free list type has a node struct (\texttt{H5FL\_<type>\_node\_t}) that acts as the elements of the linked free list. 
+Each free list type has a head struct (\texttt{H5FL\_<type>\_head\_t}) that acts as the head of the free list. This head points to a list of free blocks that are all of the same fixed size. Each free list type has a node struct (\texttt{H5FL\_<type>\_node\_t}) that acts as the elements of the linked free list.
 
 % Block and array free lists make use of an additional structure \texttt{H5FL\_<type>\_list\_t} to store information about each individual block and array on the free list.
 
@@ -90,7 +90,7 @@ A fifth free list type, sequence free lists, is a variation on array free lists.
 
 Block and array free lists, due to supporting arbitrary size blocks of bytes, are slightly more complicated than other free list types. They are implemented using three architectural elements. The first element is lists of free blocks of a given size. Each element of this list is represented as an instance of \texttt{H5FL\_<type>\_list\_t}. Each element in the list stores information about each free block/array. The second element is nodes, which sit either in a priority queue (for blocks) or in an array (for arrays). Each node is associated with a free list, and each node stores pointers to adjacent nodes. Nodes in the priority queue/array are represented as instances of \texttt{H5FL\_<type>\_node\_t}. The third element is a pointer to the head of the priority queue/array, represented by \texttt{H5FL\_<type>\_head\_t}. Figure~\ref{fig:block-free-list} shows the structure of a block-free list.
 
-\begin{comment} 
+\begin{comment}
 Figure drawing stored at https://thehdfgroup-my.sharepoint.com/:u:/g/personal/mlarson_hdfgroup_org/EY7BxMS5ll1DnLrxslw08q8BzyenrExg6KqG1PZ9HdUtpQ?e=4dNRHV
 \end{comment}
 
@@ -107,7 +107,7 @@ When a memory allocation for a block or array is requested from a free list, the
 
 A major benefit of library-handled free lists is that they enable library-handled garbage collection. Garbage collection is the process by which the library returns library-managed free space to the filesystem.
 
-Garbage collection functionality is exposed to applications through \texttt{H5garbage\_collect()}. This is one of many ways the library exposes the memory and performance tradeoff to applications - less frequent garbage collection will use more memory but involve fewer system calls. In contrast, frequent garbage collection keeps memory overhead low but may involve slow allocations.
+Garbage collection functionality is exposed to applications through \func{H5garbage_collect}. This is one of many ways the library exposes the memory and performance tradeoff to applications - less frequent garbage collection will use more memory but involve fewer system calls. In contrast, frequent garbage collection keeps memory overhead low but may involve slow allocations.
 
 When a request for memory allocation (through \texttt{H5MM}) cannot be satisfied by the system, the library runs garbage collection and retries the system memory allocation call before throwing an error. This avoids a scenario where the library has memory available to it through free lists, but requests to the system for memory allocation fail due to the system being unaware of this memory.
 
@@ -146,7 +146,7 @@ An API context is represented by the \texttt{H5CX\_t} struct. This struct has at
 \begin{table}[h!]
 \begin{tabular}{||c|m{0.70\textwidth}||}
 \hline
-\textbf{Context Field Type} & \textbf{Description} \\  [0.5ex] 
+\textbf{Context Field Type} & \textbf{Description} \\  [0.5ex]
 \hline\hline
 Reference Property Lists &  The property lists to use for this operation. It may be default or provided by the application. The context stores pointers to the underlying property list objects (\texttt{H5P\_genplist\_t}) without copying them. These fields retrieve property lists for operations that require them in modules such as \texttt{H5FD}. \\
 \hline
@@ -159,17 +159,17 @@ Return-Only Fields & Return-only fields correspond to properties from property l
 \end{tabular}
 \caption{API Context Field Types}
 \label{table:H5CX_fields}
-\end{table} 
+\end{table}
 
-\item Reentrancy and The Context Stack 
+\item Reentrancy and The Context Stack
 
-Some API routines, such as \texttt{H5Literate()}, involve user-defined callbacks, which may themselves call API routines. Thus, API contexts must be re-entrant safe. This is handled by storing multiple API contexts on a stack, where the topmost context on the stack is used by the most recent API routine in the call stack.
+Some API routines, such as \func{H5Literate}, involve user-defined callbacks, which may themselves call API routines. Thus, API contexts must be re-entrant safe. This is handled by storing multiple API contexts on a stack, where the topmost context on the stack is used by the most recent API routine in the call stack.
 
-Nodes on the API context stack are represented by the struct \texttt{H5CX\_node\_t}. Each node contains a pointer to an \texttt{H5CX\_t} instance with the actual information for that context, and a pointer to the next (lower) node in the stack. 
+Nodes on the API context stack are represented by the struct \texttt{H5CX\_node\_t}. Each node contains a pointer to an \texttt{H5CX\_t} instance with the actual information for that context, and a pointer to the next (lower) node in the stack.
 
 Each API call uses the macro \texttt{FUNC\_ENTER\_API} (or \texttt{FUNC\_ENTER\_API\_NOCLEAR}) to initialize and allocate a new context node. This context node is pushed to the top of the context stack by \texttt{H5CX\_push()}. The end of each API call uses the macro \texttt{FUNC\_LEAVE\_API} to free the context node and remove it from the context stack with \texttt{H5CX\_pop()}.
 
-\texttt{H5CX\_push\_special()}/\texttt{H5CX\_pop\_special()} are only used in the library termination routine \\ \texttt{H5\_term\_library()}. The normal push and pop routines use the library's free-list memory allocation and free routines. During library termination, the free-list and memory management structures are shut down. Thus, to avoid dependency on these structures, the special push and pop functions use system memory calls instead. 
+\func{H5CX_push_special}/\func{H5CX_pop_special} are only used in the library termination routine \\ \func{H5_term_library}. The normal push and pop routines use the library's free-list memory allocation and free routines. During library termination, the free-list and memory management structures are shut down. Thus, to avoid dependency on these structures, the special push and pop functions use system memory calls instead.
 
 \item API Context Setup
 
@@ -178,15 +178,15 @@ API routines need to use certain functions, depending on their parameters, to co
 \begin{table}[h!]
 \begin{tabular}{||c|m{0.25\textwidth}|m{0.45\textwidth}||}
 \hline
-\textbf{Context Function} & \textbf{Use Case}  & \textbf{Description} \\  [0.5ex] 
+\textbf{Context Function} & \textbf{Use Case}  & \textbf{Description} \\  [0.5ex]
 \hline\hline
-\texttt{H5CX\_set\_apl()} & Routines with an access property list parameter & Stores the access property list in the context, sets the collective metadata read flag in the context, and enables sanity checks during collective API operations. \\
+\func{H5CX_set_apl} & Routines with an access property list parameter & Stores the access property list in the context, sets the collective metadata read flag in the context, and enables sanity checks during collective API operations. \\
 \hline
-\texttt{H5CX\_set\_loc()} & Routines that modify file metadata \textbf{without} an access list parameter & Sets the collective metadata read flag in the context, and enables sanity checks during collective API operations. \\
+\func{H5CX_set_loc} & Routines that modify file metadata \textbf{without} an access list parameter & Sets the collective metadata read flag in the context, and enables sanity checks during collective API operations. \\
 \hline
-\texttt{H5CX\_set\_lapl()} &  Routines which have both an object-specific access property list, and a link access property list (LAPL) & When a routine takes two access property lists, the object-specific access property list should be set with \texttt{H5CX\_set\_apl()}, and the LAPL should be set with \texttt{H5CX\_set\_lapl()}. \\
+\func{H5CX_set_lapl} &  Routines which have both an object-specific access property list, and a link access property list (LAPL) & When a routine takes two access property lists, the object-specific access property list should be set with \func{H5CX_set_apl}, and the LAPL should be set with \func{H5CX_set_lapl}. \\
 \hline
-\texttt{H5CX\_set\_dxpl()} &  Routines with a data access property list (DXPL) parameter & Stores the provided DXPL in the context. \\
+\func{H5CX_set_dxpl} &  Routines with a data access property list (DXPL) parameter & Stores the provided DXPL in the context. \\
 \hline
 \end{tabular}
 \caption{API Context Setup Routines}
@@ -210,15 +210,15 @@ An error message is an in-memory object represented by the \texttt{H5E\_msg\_t} 
 
 \item Error Records
 
-Error records are complete descriptions of individual errors. An error record is implemented as the \texttt{H5E\_error2\_t} struct, which consists of a major error message, a minor error message, an error class, a description of the specific error that occurred, and the location at which the error occurred in the source code. 
+Error records are complete descriptions of individual errors. An error record is implemented as the \texttt{H5E\_error2\_t} struct, which consists of a major error message, a minor error message, an error class, a description of the specific error that occurred, and the location at which the error occurred in the source code.
 
 \item Error Stacks
 
-An error stack is a collection of error records. By default, when an error occurs in a library function, an error record is pushed onto the active error stack and that function returns a failure indication. Its caller detects the failure, pushes another error record onto the stack, and returns another failure indication. This continues until the API function called by the application returns a failure indication. The library has a default error stack. Generally, errors cause this stack to be automatically printed to the standard error stream. \texttt{H5E\_DEFAULT} may be provided as an error stack ID to indicate the library's default error stack to error API functions. The library's currently active error stack is stored as the globally accessible \texttt{H5E\_stack\_g}. 
+An error stack is a collection of error records. By default, when an error occurs in a library function, an error record is pushed onto the active error stack and that function returns a failure indication. Its caller detects the failure, pushes another error record onto the stack, and returns another failure indication. This continues until the API function called by the application returns a failure indication. The library has a default error stack. Generally, errors cause this stack to be automatically printed to the standard error stream. \texttt{H5E\_DEFAULT} may be provided as an error stack ID to indicate the library's default error stack to error API functions. The library's currently active error stack is stored as the globally accessible \texttt{H5E\_stack\_g}.
 
 An error stack is implemented as an \texttt{H5E\_t} struct. Each error stack is created with space for a fixed amount of error records. If more than this amount of errors are pushed onto a single stack, excess error records are truncated, and only the innermost errors will remain.
 
-When an error record is pushed onto an error stack, the information of the record is not copied. Pointers to the record's error class and error messages are stored, and \texttt{H5I\_inc\_ref()} increases the reference count of those objects. Correspondingly, when a record is removed from a stack, these pointers are removed, and the reference count to the record's fields is decreased via \texttt{H5I\_dec\_ref()}.
+When an error record is pushed onto an error stack, the information of the record is not copied. Pointers to the record's error class and error messages are stored, and \func{H5I_inc_ref} increases the reference count of those objects. Correspondingly, when a record is removed from a stack, these pointers are removed, and the reference count to the record's fields is decreased via \func{H5I_dec_ref}.
 
 Most top-level API functions clear the active error stack upon entry through the \texttt{FUNC\_ENTER\_API} macro, which calls \texttt{H5E\_clear\_stack()}. Certain error-handling API functions, such as \texttt{H5Eprint()}, do not clear the error stack since this would destroy the information they are meant to work with. Error clearing is avoided by replacing the API entry macro with the similar \texttt{FUNC\_ENTER\_API\_NOCLEAR}. Private library functions, which call \texttt{FUNC\_ENTER\_NOAPI} upon entry, and package library functions, which use \texttt{FUNC\_ENTER\_PACKAGE} upon entry, do not clear the error stack.
 
@@ -230,13 +230,13 @@ If an error occurs after the \texttt{done} label, the use of \texttt{FUNC\_GOTO\
 
 \item Error Classes
 
-An error class is a collection of major and minor error messages. Error records must belong to an error class. An application can register a new custom error class with the library via \texttt{H5Eregister\_class()}. An error class is implemented as a \texttt{H5E\_cls\_t} struct containing only the three strings provided to \texttt{H5Eregister\_class()}, consisting of the error class's name, the library to which the error class belongs, and the version of that library. When using \texttt{H5Eprint()}, the error class of a set of records is displayed as \texttt{<ERROR\_CLASS>-DIAG}. 
+An error class is a collection of major and minor error messages. Error records must belong to an error class. An application can register a new custom error class with the library via \func{H5Eregister_class}. An error class is implemented as a \texttt{H5E\_cls\_t} struct containing only the three strings provided to \texttt{H5Eregister\_class()}, consisting of the error class's name, the library to which the error class belongs, and the version of that library. When using \texttt{H5Eprint()}, the error class of a set of records is displayed as \texttt{<ERROR\_CLASS>-DIAG}.
 
 \item Customized Error Handling
 
 Users can define their own error reporting callback of type \texttt{H5E\_auto2\_t}. When an API function returns a failure indication, this callback will be invoked on the error stack. The default error reporting callback, \texttt{H5Eprint()}, uses \func{H5Ewalk} to traverse the individual error records within an error stack. \texttt{H5Ewalk()} invokes a \texttt{H5E\_walk\_t} callback on each error record and traverses the error stack.
 
-\texttt{H5Eget\_current\_stack()} registers the library's current error stack as an in-memory object and assigns it a handle ID. This clears the active error stack but leaves the error records that were in the active error stack accessible within the returned error stack object. Once an error stack is assigned a handle, custom error handling can be performed directly through the error API. 
+\func{H5Eget_current_stack} registers the library's current error stack as an in-memory object and assigns it a handle ID. This clears the active error stack but leaves the error records that were in the active error stack accessible within the returned error stack object. Once an error stack is assigned a handle, custom error handling can be performed directly through the error API.
 \end{itemize}
 
 \subsection{Library Identifiers (\texttt{H5I})}\label{ref:handles}
@@ -268,7 +268,7 @@ At library shutdown time, all ID types are cleared and any still-open objects wi
 
 \subsubsection{Extensibility}
 
-Users can define their own ID type using the \texttt{H5Iregister\_type()} API call. IDs for user-created objects can then be obtained using \texttt{H5Iregister()}. There are many other \texttt{H5I} API calls that can be used to manipulate user-defined IDs and ID types. Most of these API calls can ONLY be used on user-defined types. For example, you can't call \texttt{H5Idestroy\_type()} on a library ID type as those are managed internally and shut down when the library shuts down. User-defined types are otherwise treated identically to library-defined types inside the library.
+Users can define their own ID type using the \func{H5Iregister_type} API call. IDs for user-created objects can then be obtained using \func{H5Iregister}. There are many other \texttt{H5I} API calls that can be used to manipulate user-defined IDs and ID types. Most of these API calls can ONLY be used on user-defined types. For example, you can't call \texttt{H5Idestroy\_type()} on a library ID type as those are managed internally and shut down when the library shuts down. User-defined types are otherwise treated identically to library-defined types inside the library.
 
 \subsubsection{Special Considerations}
 
@@ -278,7 +278,7 @@ Datatypes can be both committed and non-committed, with the former requiring the
 
 \paragraph{Deletion}
 
-When IDs are deleted in \texttt{H5I\_clear\_type()}, the IDs can't simply be deleted during the traversal, as the type's \texttt{free} callback could free other IDs, potentially corrupting the internal data structures. Instead, this is implemented using a "mark-and-sweep" algorithm to avoid problems.
+When IDs are deleted in \func{H5I_clear_type}, the IDs can't simply be deleted during the traversal, as the type's \texttt{free} callback could free other IDs, potentially corrupting the internal data structures. Instead, this is implemented using a "mark-and-sweep" algorithm to avoid problems.
 
 \begin{comment}
 \paragraph{Future IDs}
@@ -319,19 +319,19 @@ When IDs are deleted in \texttt{H5I\_clear\_type()}, the IDs can't simply be del
 
 %\todo[inline]{Owner: Glenn -- Priority: High -- Effort: M -- Completion: 60\%}
 
-The metadata cache is a cache meant to speed up access to HDF5 metadata and supports features such as cache size adjustment under automatic or user program control. 
+The metadata cache is a cache meant to speed up access to HDF5 metadata and supports features such as cache size adjustment under automatic or user program control.
 
 The cache itself is like a very modified version of the UNIX buffer cache and uses a "Least Recently Used" (LRU) replacement policy to determine which items within the cache get evicted first. Due to the fact that the metadata written to a file can grow without bounds, the size of the metadata cache must reflect this ability, and no max entry amount can be set. Instead, users may set a maximum size, and eviction will occur as necessary using the LRU replacement policy. Similarly to UNIX, when dirty entries reach the end of the cache, they are flushed, marked as clean, and reset to the beginning of the cache.
 
 When running in parallel, there are three different strategies for writing metadata to the file. By default, all pieces of metadata are distributed among the ranks, with each rank writing its pieces independently and marking the others clean. Optionally, metadata can be distributed among the processes in the same way and then written in a single collective operation. Finally, the library can be configured so that only process 0 is allowed to write metadata to the file, and it does so only at synchronization points.
 
-It is possible to tell when the size of the cache is a problem and must increase based on the hit rate, which is calculated over a period of time known as an epoch. When the hit rate has been low for a while, it means that the cache is probably at maximum capacity, and its capacity is perhaps not big enough. If this happens, the size will increase according to some user-defined multiple. 
+It is possible to tell when the size of the cache is a problem and must increase based on the hit rate, which is calculated over a period of time known as an epoch. When the hit rate has been low for a while, it means that the cache is probably at maximum capacity, and its capacity is perhaps not big enough. If this happens, the size will increase according to some user-defined multiple.
 
-In addition, if the metadata entry is larger than the cache itself, this could also cause problems. This issue is fixed whenever it appears by taking the size of the metadata entry, multiplying it by some preset factor, and increasing the size of the cache based on this new size. 
+In addition, if the metadata entry is larger than the cache itself, this could also cause problems. This issue is fixed whenever it appears by taking the size of the metadata entry, multiplying it by some preset factor, and increasing the size of the cache based on this new size.
 
-Both of the above problems may arise when cache sizes are too big. Similarly, issues can occur when the cache size is too small. However, this is harder to judge. Ageout with hit rate threshold is the default cache size reduction algorithm of choice, and it combines two methods of detecting an oversized cache size. The first involves checking the hit rate once again. If the hit rate exceeds some preset amount, it might mean that the cache size is too big and needs to be reduced. Then, the second part of the algorithm, checking for metadata entries that haven't been accessed in some number of epochs, kicks in and removes aged-out entries. 
+Both of the above problems may arise when cache sizes are too big. Similarly, issues can occur when the cache size is too small. However, this is harder to judge. Ageout with hit rate threshold is the default cache size reduction algorithm of choice, and it combines two methods of detecting an oversized cache size. The first involves checking the hit rate once again. If the hit rate exceeds some preset amount, it might mean that the cache size is too big and needs to be reduced. Then, the second part of the algorithm, checking for metadata entries that haven't been accessed in some number of epochs, kicks in and removes aged-out entries.
 
-The metadata cache's configuration information is stored in a \texttt{H5AC\_cache\_config\_t} struct. This struct contains fields for general information, size-increasing control fields, size-decreasing control fields, and parallel configuration fields. 
+The metadata cache's configuration information is stored in a \texttt{H5AC\_cache\_config\_t} struct. This struct contains fields for general information, size-increasing control fields, size-decreasing control fields, and parallel configuration fields.
 
 For a more complete reference of the metadata cache, please refer to \url{https://docs.hdfgroup.org/hdf5/develop/_t_n_m_d_c.html} or the source code.
 
@@ -353,11 +353,11 @@ For a more complete reference of the metadata cache, please refer to \url{https:
 \begin{itemize}
     \item File in-memory objects
 
-Each successful \texttt{H5Fopen()} results in a top-level file descriptor \texttt{H5F\_t}. By contrast, \texttt{H5F\_shared\_t}, the underlying structure storing information about the opened file, is allocated only once for each file in storage and is shared between file descriptors that point at the same file. Most of the fields in \texttt{H5F\_shared\_t} represent information related to persisting HDF5 files in a file system according to the file format specification~\cite{ffmt}. The shared file also tracks how many file descriptors point to it and is only closed when its last file descriptor is closed.
+Each successful \func{H5Fopen} results in a top-level file descriptor \texttt{H5F\_t}. By contrast, \texttt{H5F\_shared\_t}, the underlying structure storing information about the opened file, is allocated only once for each file in storage and is shared between file descriptors that point at the same file. Most of the fields in \texttt{H5F\_shared\_t} represent information related to persisting HDF5 files in a file system according to the file format specification~\cite{ffmt}. The shared file also tracks how many file descriptors point to it and is only closed when its last file descriptor is closed.
 
 The shared file contains a list of all opened objects, while each file descriptor maintains only counts of how many times each object is opened through that particular file descriptor. This division of information ensures that closing a file descriptor only decrements references that originated through that descriptor. For similar reasons, each file descriptor tracks the total number of objects it has open, excluding the root group.
 
-Most information about child files mounted onto a parent file is kept in a table on the shared file structure of the parent file. The file descriptor maintains only a count of how many files were mounted through itself, similar to its count for open objects. The number of mounted files is maintained so that a file descriptor will close when 1) a weak close (see the section 'File open and close') was previously performed on it, and 2) an object is closed, and the only open objects remaining on the file descriptor are mounted groups. 
+Most information about child files mounted onto a parent file is kept in a table on the shared file structure of the parent file. The file descriptor maintains only a count of how many files were mounted through itself, similar to its count for open objects. The number of mounted files is maintained so that a file descriptor will close when 1) a weak close (see the section 'File open and close') was previously performed on it, and 2) an object is closed, and the only open objects remaining on the file descriptor are mounted groups.
 
 The shared file also contains information necessary for I/O, such as the file's permissions in storage, a page buffer, and any free space managers.
 
@@ -403,7 +403,7 @@ A file's EFC contains both a skip list of cache entries and the head of a cache 
 
 %\todo[inline]{Owner: Matt -- Priority: High -- Effort: M -- Completion: 100\%}
 
-The page buffer exists within the native VOL, just above the VFL and just below the I/O layer. Thus, the library can benefit from the page buffer cache regardless of which VFD is active. 
+The page buffer exists within the native VOL, just above the VFL and just below the I/O layer. Thus, the library can benefit from the page buffer cache regardless of which VFD is active.
 
 There are a few conditions under which file I/O bypasses the page buffer entirely: if page buffering is disabled, if the requested I/O operation is larger than one page and thus would not benefit from the page buffer, or if the requested operation is a parallel raw data access. Additionally, when opening a file with page buffering enabled, the superblock contains information needed to initialize the page buffer (e.g. page size). Because this information must be read from the superblock before the page buffer is initialized, the page buffer cannot be used for this operation.
 
@@ -415,13 +415,13 @@ The page buffer's page size will be rounded down to the nearest multiple of the 
 
 A page buffer is represented in memory by the struct \texttt{H5PB\_t}, which is attached to a shared file object. Page buffers are associated with the shared file so that different handles to the same file share the same page buffer.
 
-The page buffer maintains three lists of pages. The first is a skip list of page entries allocated by the page buffer itself. The second is another skip list containing only the page entries inserted by the free space manager. The free space manager inserts blank pages into this list during reads of file regions that have never been written to, in order to avoid unnecessary file accesses. The third list is a linked list of page entries sorted by the least recent update (LRU). The LRU-sorted list is used to evict the oldest page entries when the maximum size of the page buffer is reached. 
+The page buffer maintains three lists of pages. The first is a skip list of page entries allocated by the page buffer itself. The second is another skip list containing only the page entries inserted by the free space manager. The free space manager inserts blank pages into this list during reads of file regions that have never been written to, in order to avoid unnecessary file accesses. The third list is a linked list of page entries sorted by the least recent update (LRU). The LRU-sorted list is used to evict the oldest page entries when the maximum size of the page buffer is reached.
 
-Page buffer entries (\texttt{H5PB\_entry\_t}) consist of their location in the file, pointers used to maintain the LRU-list, and an indication of whether the page buffer entry contains metadata or raw data. 
+Page buffer entries (\texttt{H5PB\_entry\_t}) consist of their location in the file, pointers used to maintain the LRU-list, and an indication of whether the page buffer entry contains metadata or raw data.
 
     \item Metadata vs Raw Data
 
-I/O operations accessing a metadata entry are always atomic - the entire entry is always accessed. Noncontiguous subsets of raw data may be accessed using selections, and so I/O operations on raw data through the page buffer require some additional steps. During raw data writes, the page buffer needs to update any pages that are partially modified by large (greater than page size) writes, and discard any pages that are entirely overwritten. Similarly, during raw data reads, the page buffer must collect data from any dirty pages that are within the span of the I/O request. 
+I/O operations accessing a metadata entry are always atomic - the entire entry is always accessed. Noncontiguous subsets of raw data may be accessed using selections, and so I/O operations on raw data through the page buffer require some additional steps. During raw data writes, the page buffer needs to update any pages that are partially modified by large (greater than page size) writes, and discard any pages that are entirely overwritten. Similarly, during raw data reads, the page buffer must collect data from any dirty pages that are within the span of the I/O request.
 
 The utility of storing metadata versus raw data in the cache will vary from use case to use case. To allow applications to optimize for their particular case, and to avoid a scenario where one type of data is completely evicted from the page buffer cache, applications may set a minimum percentage of the page buffer's memory to be reserved for each type of data.
 
@@ -435,7 +435,7 @@ Because all operations that modify metadata must be performed collectively, the 
 
 The page buffer is always bypassed when reading or writing raw data in parallel. When accessing raw data collectively, the HDF5 library constructs MPI-derived datatypes to represent possibly non-contiguous buffers in memory and file offsets. At the page buffer layer, it would be necessary to flatten the derived datatypes, update the page buffers, and then impose additional communication among all processes to determine who reads/writes which pages for the collective operation. This would represent considerable overhead and complexity, and replicate work that is more logically handled by MPI itself. Simply bypassing the page buffer likely leads to better performance than this implementation would. Additionally, most parallel raw data accesses are large enough that the page buffer would not provide a significant benefit. While many of these issues would not apply to parallel independent raw data access, concurrent use of collective and independent operations would cause the page buffers of the processes involved in each operation to become inconsistent with one another, and thus the page buffer is bypassed during all parallel operations regardless of whether they are collective or independent.
 
-When using Single Writer Multiple Reader (SWMR), the writer may not make use of a page buffer. The SWMR writer has a required order for its operations, which would not be preserved by the page buffer. SWMR readers can use the page buffer with only one caveat. After a refresh operation is performed on an object, entries that get evicted from the metadata cache must have their corresponding pages evicted from the page buffer in order to avoid subsequent reads returning old data. 
+When using Single Writer Multiple Reader (SWMR), the writer may not make use of a page buffer. The SWMR writer has a required order for its operations, which would not be preserved by the page buffer. SWMR readers can use the page buffer with only one caveat. After a refresh operation is performed on an object, entries that get evicted from the metadata cache must have their corresponding pages evicted from the page buffer in order to avoid subsequent reads returning old data.
 
 \end{itemize}
 
@@ -494,20 +494,20 @@ There are several functions and variables for querying and copying file access (
 
 \subsubsection{VFD Registration}
 
-It is mandatory for every VFD to implement and register the \texttt{H5VL\_class\_t} struct. This struct outlines the set of methods the VFD overrides. In C code, there are three ways to register the \texttt{H5VL\_class\_t} struct: 
+It is mandatory for every VFD to implement and register the \texttt{H5VL\_class\_t} struct. This struct outlines the set of methods the VFD overrides. In C code, there are three ways to register the \texttt{H5VL\_class\_t} struct:
 \begin{enumerate}
-    \item \texttt{H5FDregister()}: register the class struct pointer directly
-    \item \texttt{H5FD\_register\_driver\_by\_name()}: locate and register the VFD by its name using the plugins interface (H5PL)
-    \item \texttt{H5FD\_register\_driver\_by\_id()}: locate and register the VFD by its ID using the plugins interface (H5PL)
+    \item \func{H5FDregister}: register the class struct pointer directly
+    \item \func{H5FD_register_driver_by_name}: locate and register the VFD by its name using the plugins interface (H5PL)
+    \item \func{H5FD_register_driver_by_id}: locate and register the VFD by its ID using the plugins interface (H5PL)
 \end{enumerate}
-These functions perform various sanity checks, including verifying that the minimum functionality of the VFD is implemented. VFD developers oftentimes implement a public wrapper function that internally calls \texttt{H5FDregister()} to avoid requiring users to pass the class struct pointer directly.
+These functions perform various sanity checks, including verifying that the minimum functionality of the VFD is implemented. VFD developers oftentimes implement a public wrapper function that internally calls \func{H5FDregister} to avoid requiring users to pass the class struct pointer directly.
 
 Parameters can be passed to the VFD after registration using property lists (H5P). The parameter string does not have any requirements on structure. There can be spaces, non-unicode characters, or binary information.  There are two functions provided for passing this string to the VFD:
 \begin{enumerate}
-    \item \texttt{H5Pset\_driver\_by\_name()}: Pass a parameter string to a property list and index by VFD name
-    \item \texttt{H5Pset\_driver\_by\_id()}: Pass a parameter string to a property list and index by VFD ID
+    \item \func{H5Pset_driver_by_name}: Pass a parameter string to a property list and index by VFD name
+    \item \func{H5Pset_driver_by_id}: Pass a parameter string to a property list and index by VFD ID
 \end{enumerate}
-\texttt{H5Pget\_driver\_config\_str()} is used internally by VFD developers for accessing this configuration information.
+\func{H5Pget_driver_config_str} is used internally by VFD developers for accessing this configuration information.
 
 HDF5 can also transparently locate and register a VFD through the H5PL with the following environment variables:
 \begin{enumerate}
@@ -544,7 +544,7 @@ const void* H5PLget_plugin_info(void) {
 VFDs can be conceptually organized as directed acyclic graphs (DAGs), although there is no specific DAG data structure in HDF5. An example DAG depicting the split VFD data path is shown in Figure~\ref{fig:vfd-dag}. There are two general approaches to handle the initialization of VFD DAGs:
 \begin{enumerate}
     \item Require users to explicitly call a custom initialization function in their code, which sets the property list parameter string to a custom data structure containing the sub-VFDs. The splitter VFD, for example, forwards data to two sub-VFDs: the read-write VFD and the write-only VFD. This VFD requires users to pass the identifiers of the already-initialized sub-VFDs using a custom \texttt{H5Pset\_fapl\_splitter} function. This approach, however, is not compatible with transparent initialization through environment variables, limiting portability.
-    \item Leverage the singleton nature of VFDs and create a custom initialization function that is called at the start of \texttt{open()}. A function-scoped static boolean variable can be used to ensure the initialization happens only once in the lifetime of the VFD, since \texttt{open()} will likely be called numerous times. This function will parse the parameter string, which should contain all information needed to initialize the sub-VFDs, and recursively register the sub-VFDs using \texttt{H5Dregister()} and \texttt{H5Pset\_driver\_by*()}.
+    \item Leverage the singleton nature of VFDs and create a custom initialization function that is called at the start of \func{open}. A function-scoped static boolean variable can be used to ensure the initialization happens only once in the lifetime of the VFD, since \func{open} will likely be called numerous times. This function will parse the parameter string, which should contain all information needed to initialize the sub-VFDs, and recursively register the sub-VFDs using \func{H5Dregister} and \func{H5Pset_driver_by*}.
 \end{enumerate}
 There is no specific functionality in HDF5 to initialize multiple VFDs at the same time -- it is the responsibility of a pass-through VFD developer to initialize any future VFDs it may depend on.
 
@@ -552,14 +552,14 @@ After initialization, I/O operations (e.g., dataset reads and writes) can be per
 
 \subsubsection{Introspecting VFDs}
 
-Various information can be queried from a VFD. \texttt{H5FDquery()} can be used to query the capabilities of a VFD-specific file structs and internally calls the \texttt{query()} callback. There are many capabilities, defined in \texttt{H5FDpublic.h}. One example is \texttt{H5FD\_FEAT\_POSIX\_COMPAT\_HANDLE}, which indicates that the return value of \texttt{get\_handle()} is an integer file descriptor compatible with POSIX I/O calls. The \texttt{ctl} callback allows for custom queries on file structs to be defined by the VFD developer using opcodes. On example opcode is \texttt{H5FD\_CTL\_GET\_MPI\_RANK\_OPCODE}, which gets the MPI rank of a file struct.
+Various information can be queried from a VFD. \func{H5FDquery} can be used to query the capabilities of a VFD-specific file structs and internally calls the \func{query} callback. There are many capabilities, defined in \texttt{H5FDpublic.h}. One example is \texttt{H5FD\_FEAT\_POSIX\_COMPAT\_HANDLE}, which indicates that the return value of \texttt{get\_handle()} is an integer file descriptor compatible with POSIX I/O calls. The \texttt{ctl} callback allows for custom queries on file structs to be defined by the VFD developer using opcodes. On example opcode is \texttt{H5FD\_CTL\_GET\_MPI\_RANK\_OPCODE}, which gets the MPI rank of a file struct.
 
 \subsubsection{Source files for \texttt{H5FD} developers}
 
 \begin{table}[!ht]
 \begin{tabular}{||c|l||}
 \hline
-\textbf{Source File} & \textbf{Description} \\  [0.5ex] 
+\textbf{Source File} & \textbf{Description} \\  [0.5ex]
 \hline\hline
 \texttt{H5FDpublic.h} & Public APIs for VFD registration and introspection \\
 \texttt{H5FDdevelop.h} & Public structs and APIs for VOL developers \\
@@ -617,7 +617,7 @@ One potential point of confusion is the \texttt{rc} field in the \texttt{H5O\_t}
 
 The object header is the root piece of metadata for all HDF5 objects on disk. The object header consists of the main object header block, which in turn consists of the prefix containing generic object metadata, as well as some number of object header messages. If the number of messages grows too large to fit into the main object header block, one or more object header continuation chunks will be created on disk, each containing more object header messages. Object header continuation blocks are pointed to from their parent object header using an object header continuation message.
 
-Since an object header is not a single block on disk, but is treated as a single object by most of the library, the way the metadata cache handles it is slightly strange. There are metadata cache clients for object header root blocks and continuation blocks, each of which serializes and deserializes these objects as needed. However, when the entire object header is retrieved, typically using \texttt{H5O\_protect()} or \texttt{H5O\_pin()}, which take an \texttt{H5O\_loc\_t} object location, these functions use the metadata cache to decode all the constituent blocks of the object header, protects (and optionally pins) the root object header block, then assembles and returns an \texttt{H5O\_t}. The \texttt{H5O\_loc\_t} struct is how other packages generally keep track of their objects and mostly consists only of a file and address of the root object header block.
+Since an object header is not a single block on disk, but is treated as a single object by most of the library, the way the metadata cache handles it is slightly strange. There are metadata cache clients for object header root blocks and continuation blocks, each of which serializes and deserializes these objects as needed. However, when the entire object header is retrieved, typically using \func{H5O_protect} or \func{H5O_pin}, which take an \texttt{H5O\_loc\_t} object location, these functions use the metadata cache to decode all the constituent blocks of the object header, protects (and optionally pins) the root object header block, then assembles and returns an \texttt{H5O\_t}. The \texttt{H5O\_loc\_t} struct is how other packages generally keep track of their objects and mostly consists only of a file and address of the root object header block.
 
     \item Object header messages
 
@@ -661,13 +661,13 @@ Additional code for handling shared messages in these callbacks is defined in \t
 \begin{itemize}
     \item Attribute in-memory objects
 
-Attribute in-memory objects are represented with the \texttt{H5A\_t} structure, defined in \texttt{H5Apkg.h}. This structure contains information about whether the attribute is shared between multiple objects, the location of the attribute's parent object on disk, and the path to the attribute in the file hierarchy. The underlying shared attribute object \texttt{H5A\_shared\_t} contains information such as the size of the attribute, its dataspace and datatype, and its name. The shared \texttt{nrefs} field tracks the number of remaining references to the attribute from other objects in the file, and the attribute's resources are freed once this count is decremented to zero. 
+Attribute in-memory objects are represented with the \texttt{H5A\_t} structure, defined in \texttt{H5Apkg.h}. This structure contains information about whether the attribute is shared between multiple objects, the location of the attribute's parent object on disk, and the path to the attribute in the file hierarchy. The underlying shared attribute object \texttt{H5A\_shared\_t} contains information such as the size of the attribute, its dataspace and datatype, and its name. The shared \texttt{nrefs} field tracks the number of remaining references to the attribute from other objects in the file, and the attribute's resources are freed once this count is decremented to zero.
 
 The \texttt{crt\_idx} field tracks the creation index of the attribute, if creation index tracking is enabled on the parent object. This index only tracks the order in which attributes were created relative to each other, not any absolute information about the time of their creation.
 
     \item Compact and Dense Attribute Storage
 
-There are two kinds of attribute storage: compact and dense. Compact attributes are kept in the object header of the parent object, along with other metadata for that object. Dense attributes are kept in a fractal heap. The address of the fractal heap for dense attribute storage is kept in the Attribute Info message in the object header. The heap IDs to access specific dense attributes in the fractal heap are stored in a name-index B-tree. 
+There are two kinds of attribute storage: compact and dense. Compact attributes are kept in the object header of the parent object, along with other metadata for that object. Dense attributes are kept in a fractal heap. The address of the fractal heap for dense attribute storage is kept in the Attribute Info message in the object header. The heap IDs to access specific dense attributes in the fractal heap are stored in a name-index B-tree.
 
 If the file access property list used for a file is set for file format compatibility with library versions before 1.8 (as is the case by default), all attributes will be stored compactly, and the creation of attributes larger than 64 KiB will not be allowed.
 
@@ -679,7 +679,7 @@ The primary fields that define an attribute are its datatype, dataspace, name, a
 
 If an object is using dense attribute storage, then the object header will contain an attribute info message with the location of a name-index B-tree, as well as the address of the fractal heap storing the attribute messages.
 
-Changes to object headers make use of caching for optimization. Attribute messages may be flushed to storage by use of \texttt{H5Fflush()} on the containing file, or \texttt{H5(D/G/T/O)flush()} on an object of the appropriate type with attached attributes. Note that these functions only directly control the library's buffers, not any buffering performed by the operating system. Flushing of object headers is also performed automatically by the library during certain operations.
+Changes to object headers make use of caching for optimization. Attribute messages may be flushed to storage by use of \func{H5Fflush} on the containing file, or \func{H5D/G/T/Oflush} on an object of the appropriate type with attached attributes. Note that these functions only directly control the library's buffers, not any buffering performed by the operating system. Flushing of object headers is also performed automatically by the library during certain operations.
 
     \item Attribute I/O
 
@@ -687,15 +687,15 @@ Attributes do not support partial reads or writes using selections. Any read or 
 
 Reads and writes to attributes use the same datatype conversion pipeline as read and writes to datasets.
 
-If an attribute in compact storage is written to, all of its previous data in the object header is overwritten by an in-memory buffer that is later flushed to storage. If an attribute in dense storage is written to, a write operation is performed on the fractal heap at the heap ID storing the attribute by name. 
+If an attribute in compact storage is written to, all of its previous data in the object header is overwritten by an in-memory buffer that is later flushed to storage. If an attribute in dense storage is written to, a write operation is performed on the fractal heap at the heap ID storing the attribute by name.
 
     \item Attribute iteration
 
 The iteration process varies between compact and dense attributes.
 
-Dense attribute iteration is handled by \texttt{H5A\_\_dense\_iterate()}. If the iteration order was specified to be \texttt{H5\_ITER\_NATIVE} in order to optimize for speed, then the order is determined by the hashes of the attribute names in the name index B-tree. Otherwise, a table of attributes is built by \texttt{H5A\_\_dense\_build\_table()}, sorted in the desired order by \texttt{H5A\_\_attr\_sort\_table()}, and then iterated through by \texttt{H5A\_\_attr\_iterate\_table()}.
+Dense attribute iteration is handled by \func{H5A__dense_iterate}. If the iteration order was specified to be \texttt{H5\_ITER\_NATIVE} in order to optimize for speed, then the order is determined by the hashes of the attribute names in the name index B-tree. Otherwise, a table of attributes is built by \texttt{H5A\_\_dense\_build\_table()}, sorted in the desired order by \texttt{H5A\_\_attr\_sort\_table()}, and then iterated through by \texttt{H5A\_\_attr\_iterate\_table()}.
 
-The compact iteration case is similar: \texttt{H5A\_\_compact\_build\_table()} creates a table of attributes, and iterates through it via \texttt{H5A\_\_attr\_iterate\_table()}. For compact attributes, the table is always constructed, even when the iteration order is \texttt{H5\_ITER\_NATIVE}. 
+The compact iteration case is similar: \func{H5A__compact_build_table} creates a table of attributes, and iterates through it via \func{H5A__attr_iterate_table}. For compact attributes, the table is always constructed, even when the iteration order is \texttt{H5\_ITER\_NATIVE}.
 
 The attribute table itself is the same, regardless of the storage type its attributes were retrieved from.
 
@@ -728,7 +728,7 @@ Groups are represented by the \texttt{H5G\_t} struct. This struct has three elem
 
     \item Link storage
 
-There are two kinds of link storage: compact and dense. Compactly stored links are kept in the object header for the group containing them, along with other metadata for that group object. Densely stored links are kept in a fractal heap. The address of the dense link fractal heap is then stored in the Link Info message in the group's header, with the heap IDs to access specific dense links stored in the name index B-tree. 
+There are two kinds of link storage: compact and dense. Compactly stored links are kept in the object header for the group containing them, along with other metadata for that group object. Densely stored links are kept in a fractal heap. The address of the dense link fractal heap is then stored in the Link Info message in the group's header, with the heap IDs to access specific dense links stored in the name index B-tree.
 
 If the file access property list used for a file is set for file format compatibility with library versions before 1.8 (as is the case by default), all links will be stored in the file's symbol table.
 
@@ -740,33 +740,33 @@ The architecture for dense/compact link storage is nearly identical to the archi
 
     \item User-defined links
 
-Users may register a user-defined link class with \texttt{H5Lregister()}, and then create a link of that class using \texttt{H5Lcreate\_ud()}. A link class definition must at minimum include a version number for the link class struct \texttt{H5L\_class\_t}, a link class identifier \texttt{class\_id}, and a traversal function \texttt{trav\_func}. \texttt{link\_class} must be in the range between \texttt{H5L\_TYPE\_UD\_MIN} and \texttt{H5L\_TYPE\_UD\_MAX}. Note that external links are implemented as an example of a user-defined link class, using \texttt{class\_id} = \texttt{H5L\_TYPE\_UD\_MIN}.
+Users may register a user-defined link class with \func{H5Lregister}, and then create a link of that class using \func{H5Lcreate_ud}. A link class definition must at minimum include a version number for the link class struct \texttt{H5L\_class\_t}, a link class identifier \texttt{class\_id}, and a traversal function \texttt{trav\_func}. \texttt{link\_class} must be in the range between \texttt{H5L\_TYPE\_UD\_MIN} and \texttt{H5L\_TYPE\_UD\_MAX}. Note that external links are implemented as an example of a user-defined link class, using \texttt{class\_id} = \texttt{H5L\_TYPE\_UD\_MIN}.
 
-User-defined link classes may also provide optional callback functions to create, move, copy, delete, and query an instance of the link class. Some functionality is automatically implemented for these callbacks as a consequence of the type-independent link architecture. 
+User-defined link classes may also provide optional callback functions to create, move, copy, delete, and query an instance of the link class. Some functionality is automatically implemented for these callbacks as a consequence of the type-independent link architecture.
 
 Depending on the user's implementation of the link callbacks, user-defined links may or may not affect the \texttt{nlinks} count of objects, and may or may not be allowed to dangle.
 
     \item Link traversal
 
-"Link traversal" refers to the process of following links to their target objects. When opening an object through a link, the link's target location in the file hierarchy is iteratively determined by \texttt{H5G\_traverse()}, and once the target location is reached, location information specifying position within the file hierarchy (\texttt{H5G\_name\_t}) and within the file (\texttt{H5O\_loc\_t}) is copied to the opened object.
+"Link traversal" refers to the process of following links to their target objects. When opening an object through a link, the link's target location in the file hierarchy is iteratively determined by \func{H5G_traverse}, and once the target location is reached, location information specifying position within the file hierarchy (\texttt{H5G\_name\_t}) and within the file (\texttt{H5O\_loc\_t}) is copied to the opened object.
 
-For hard links, if the hard link points to a mounted file, then \texttt{H5F\_traverse\_mount()} performs a binary search over the mount table of the original file in order to copy the root group location information of the mounted file. 
+For hard links, if the hard link points to a mounted file, then \func{H5F_traverse_mount} performs a binary search over the mount table of the original file in order to copy the root group location information of the mounted file.
 
-For soft links, traversal of the target path is performed by \texttt{H5G\_\_traverse\_slink()}. The file hierarchy traversal process of \texttt{H5G\_traverse()} is repeated on the path specified by the soft link. Because soft links are allowed to dangle, this traversal may find that no object exists at the target location, or that the object is of an unexpected type.
+For soft links, traversal of the target path is performed by \func{H5G__traverse_slink}. The file hierarchy traversal process of \func{H5G_traverse} is repeated on the path specified by the soft link. Because soft links are allowed to dangle, this traversal may find that no object exists at the target location, or that the object is of an unexpected type.
 
-For user-defined links, the provided traversal callback is invoked in \texttt{H5G\_\_traverse\_ud()}. 
+For user-defined links, the provided traversal callback is invoked in \func{H5G__traverse_ud}.
 
-For external links, the traverse callback \texttt{H5L\_\_extern\_traverse()} handles opening the external file and locating the target object within it.
+For external links, the traverse callback \func{H5L__extern_traverse} handles opening the external file and locating the target object within it.
 
     \item Link iteration
 
-Iteration over all links in a group may be performed through \texttt{H5Literate()} non-recursively, or \texttt{H5Lvisit()} recursively. \texttt{H5Literate()}, when using the native VOL, passes control to \texttt{H5L\_iterate()}, which internally uses \texttt{H5G\_iterate()}. Similarly, \texttt{H5Lvisit()} ultimately passes control to \texttt{H5G\_visit()}. Making the relationship between groups and links clear was one of the reasons that the iteration functions in the \texttt{H5G} module were deprecated in favor of \texttt{H5Lvisit()/H5Literate()}. 
+Iteration over all links in a group may be performed through \func{H5Literate} non-recursively, or \func{H5Lvisit} recursively. \func{H5Literate}, when using the native VOL, passes control to \func{H5L_iterate}, which internally uses \func{H5G_iterate}. Similarly, \func{H5Lvisit} ultimately passes control to \texttt{H5G\_visit()}. Making the relationship between groups and links clear was one of the reasons that the iteration functions in the \texttt{H5G} module were deprecated in favor of \texttt{H5Lvisit()/H5Literate()}.
 
-The iteration process varies based on whether the group is currently using dense or compact storage (or a symbol table, for old versions of the file format). 
+The iteration process varies based on whether the group is currently using dense or compact storage (or a symbol table, for old versions of the file format).
 
-Dense link iteration is handled by \texttt{H5G\_\_dense\_iterate()}. If the iteration order was specified to be \texttt{H5\_ITER\_NATIVE} in order to optimize for speed, then the order of link iteration is determined by the hashes of the link names in the name index B-tree. Otherwise, a table of links is built by \texttt{H5G\_\_dense\_build\_table()}, sorted in the desired order by \texttt{H5G\_\_link\_sort\_table()}, and then the link table is iterated through by \texttt{H5G\_\_link\_iterate\_table()}. % The table is implemented as an array of pointers to link objects (\texttt{H5O\_link\_t}) that keeps track of its total length.
+Dense link iteration is handled by \func{H5G__dense_iterate}. If the iteration order was specified to be \texttt{H5\_ITER\_NATIVE} in order to optimize for speed, then the order of link iteration is determined by the hashes of the link names in the name index B-tree. Otherwise, a table of links is built by \texttt{H5G\_\_dense\_build\_table()}, sorted in the desired order by \texttt{H5G\_\_link\_sort\_table()}, and then the link table is iterated through by \texttt{H5G\_\_link\_iterate\_table()}. % The table is implemented as an array of pointers to link objects (\texttt{H5O\_link\_t}) that keeps track of its total length.
 
-The compact iteration case is similar: \texttt{H5G\_\_compact\_iterate()} uses \\ \texttt{H5G\_\_compact\_build\_table()} to create a table of links and iterates through it via \\ \texttt{H5G\_\_link\_iterate\_table()}. For compact links, the link table is always constructed, even when the iteration order is \texttt{H5\_ITER\_NATIVE}. 
+The compact iteration case is similar: \func{H5G__compact_iterate} uses \\ \func{H5G__compact_build_table} to create a table of links and iterates through it via \\ \func{H5G__link_iterate_table}. For compact links, the link table is always constructed, even when the iteration order is \texttt{H5\_ITER\_NATIVE}.
 
 The link table itself is the same, regardless of the storage type its links were retrieved from.
 
@@ -819,9 +819,9 @@ The chunk cache is an in-memory cache of the raw data chunks. It uses a very bas
 
 Virtual datasets allow an application to define a dataset whose actual data is stored in separate "source" datasets. Virtual datasets do not store any data themselves, they consist only of a set of mappings from a selection in the virtual dataset to a selection in a source dataset. These mappings can be standard selections, "unlimited" selections where one dimension has a count or block of \texttt{H5S\_UNLIMITED}, or "printf" selections, where the file or path name of the source dataset contains a printf-style character sequence that is replaced by a block number, corresponding to the blocks in the selection in the virtual dataset.
 
-I/O for virtual datasets is performed directly between each source dataset and the application's memory buffer, with no intermediate buffer, using the standard facilities for each source dataset. The virtual dataset code only handles the selection transformations necessary to set up these operations, with the exception that the virtual dataset code also writes fill values to the read buffer when the application reads from a section of the virtual dataset that has no associated source dataset mapping. To perform this transformation, the virtual dataset code uses the \texttt{H5S\_select\_project\_intersection()} operation covered in the Dataspaces section. For each mapping, there are four selections involved: the memory selection, the file selection (in the virtual dataset), the mapping's virtual selection, and the mapping's source selection. To understand how to perform the transformation with no intermediate buffer, first consider how things would work if there were an intermediate buffer representing the entire virtual dataset. We'll use a read operation for this description, but it works similarly for write. The data from the source selection would be read from the source dataset to the virtual selection in the virtual dataset. Then the file selection in the virtual dataset is read to the memory selection in the application's read buffer. However, we only care about the elements that are selected in the virtual dataset in both the file selection and the mapping's virtual selection, all other elements will not make it all the way from the source dataset to the memory buffer. We therefore want to map the intersection of the file selection and the virtual selection onto both the memory selection and the source selection. To get the mapping onto the memory selection, we use \texttt{H5S\_select\_project\_intersection()} to project the intersection with the virtual selection (source intersect space) within the file selection (source space) onto the memory selection (destination space). To get the mapping onto the source selection, we use \texttt{H5S\_select\_project\_intersection()} to project the intersection with the file selection (source intersect space) within the virtual selection (source space) onto the source selection (destination space). We then use the resulting two selections in the underlying dataset I/O between the memory space and the source dataset, and repeat this process for every other mapping (that has any intersecting elements).
+I/O for virtual datasets is performed directly between each source dataset and the application's memory buffer, with no intermediate buffer, using the standard facilities for each source dataset. The virtual dataset code only handles the selection transformations necessary to set up these operations, with the exception that the virtual dataset code also writes fill values to the read buffer when the application reads from a section of the virtual dataset that has no associated source dataset mapping. To perform this transformation, the virtual dataset code uses the \func{H5S_select_project_intersection} operation covered in the Dataspaces section. For each mapping, there are four selections involved: the memory selection, the file selection (in the virtual dataset), the mapping's virtual selection, and the mapping's source selection. To understand how to perform the transformation with no intermediate buffer, first consider how things would work if there were an intermediate buffer representing the entire virtual dataset. We'll use a read operation for this description, but it works similarly for write. The data from the source selection would be read from the source dataset to the virtual selection in the virtual dataset. Then the file selection in the virtual dataset is read to the memory selection in the application's read buffer. However, we only care about the elements that are selected in the virtual dataset in both the file selection and the mapping's virtual selection, all other elements will not make it all the way from the source dataset to the memory buffer. We therefore want to map the intersection of the file selection and the virtual selection onto both the memory selection and the source selection. To get the mapping onto the memory selection, we use \func{H5S_select_project_intersection} to project the intersection with the virtual selection (source intersect space) within the file selection (source space) onto the memory selection (des
 
-The unlimited and printf style mappings allow the size of the virtual dataset to depend on the sizes of the source datasets. When the application calls \texttt{H5Dget\_space()}, the virtual dataset code, in \texttt{H5D\_\_virtual\_set\_extent\_unlim()} checks the dimensions (extents) of all the source datasets that are associated with unlimited or printf mappings, then computes the resulting extent of the virtual dataset based on the setting from \texttt{H5Pset\_virtual\_view()}. The library must also generate non-unlimited versions of all the unlimited virtual and source selections that match this size (or the source dataset size in case it is smaller), these are called "clipped" selections. Currently, the library also adjusts the extents of these clipped selections to match the virtual and source datasets, however, this is probably not necessary since the extent is no longer used by \texttt{H5S\_select\_project\_intersection()} and this code could be simplified somewhat. This clipping of the selections and adjustment of the extents is also performed in \texttt{H5D\_\_virtual\_init()}, which is called once to initialize the dataset in memory, though this function does not check the source dataset extents or adjust the virtual dataset extent.
+The unlimited and printf style mappings allow the size of the virtual dataset to depend on the sizes of the source datasets. When the application calls \func{H5Dget_space}, the virtual dataset code, in \func{H5D__virtual_set_extent_unlim} checks the dimensions (extents) of all the source datasets that are associated with unlimited or printf mappings, then computes the resulting extent of the virtual dataset based on the setting from \func{H5Pset_virtual_view}. The library must also generate non-unlimited versions of all the unlimited virtual and source selections that match this size (or the source dataset size in case it is smaller), these are called "clipped" selections. Currently, the library also adjusts the extents of these clipped selections to match the virtual and source datasets, however, this is probably not necessary since the extent is no longer used by \func{H5S_select_project_intersection} and this code could be simplified somewhat. This clipping of the selections and adjustment of the extents is also performed in \func{H5D__virtual_init}, which is called once to initialize the dataset in memory, though this function does not check the source dataset extents or adjust the virtual dataset extent.
 
     \item I/O pipeline
 
@@ -847,13 +847,13 @@ Selection and vector I/O are facilities that allow the library to pass informati
 
 In the I/O pipeline, the decision on whether to use the selection I/O pipeline is made during the various initialization steps. Any dataset's layout \texttt{init} callback can disable selection I/O, as well as several global triggers within the initialization code in \texttt{H5Dio.c}. The main selection I/O pipeline follows a similar path to the serial/independent pipeline, with some changes to support selection I/O. Though it follows the independent code path, selection I/O still supports full MPIO collective I/O, since the datatypes are constructed in the MPIO file driver using the selections. When operating on a single dataset, the primary change is that the low-level I/O call changes from a series of scalar (single offset/length) calls to a single selection I/O call, built up from all the selections within all the selected chunks in the dataset, and the accompanying memory selections. When operating on multiple datasets, the layout's \texttt{read}/\texttt{write} call does not actually perform I/O, instead it adds its selections, offsets, and buffers to a global list. At the end of \texttt{H5D\_\_read()}/\texttt{H5D\_\_write()}, the library then calls \\ \texttt{H5F\_shared\_select\_read()}/\texttt{H5F\_shared\_select\_write()} with these lists.
 
-The layout I/O callbacks also avoid performing the actual I/O in the case of type conversion, even if there is only one dataset involved. When using type conversion with selection I/O, at the end of \texttt{H5D\_\_read()}/\texttt{H5D\_\_write()}, the library calls \\ \texttt{H5D\_\_scatgath\_read\_select()}/\texttt{H5D\_\_scatgath\_write\_select()}. These functions then implement type conversion while performing I/O to/from disk using the selection I/O interface. These functions require that either the type conversion buffer is large enough to fit the entire I/O operation, or that in-place type conversion is used (or a combination of the two), since they are intended to maximize the use of selection I/O and minimize the number of VFD I/O calls. This behavior also makes it possible to support collective I/O with type conversion, a feature that is only supported with selection I/O.
+The layout I/O callbacks also avoid performing the actual I/O in the case of type conversion, even if there is only one dataset involved. When using type conversion with selection I/O, at the end of \func{H5D__read}/\func{H5D__write}, the library calls \\ \func{H5D__scatgath_read_select}/\func{H5D__scatgath_write_select}. These functions then implement type conversion while performing I/O to/from disk using the selection I/O interface. These functions require that either the type conversion buffer is large enough to fit the entire I/O operation, or that in-place type conversion is used (or a combination of the two), since they are intended to maximize the use of selection I/O and minimize the number of VFD I/O calls. This behavior also makes it possible to support collective I/O with type conversion, a feature that is only supported with selection I/O.
 
     \item Allocation
 
 Space for the dataset's raw data can be allocated when the dataset is created (\texttt{H5D\_ALLOC\_TIME\_EARLY}), when it is first written to (\texttt{H5D\_ALLOC\_TIME\_LATE}), or, in the case of a chunked dataset, allocate each chunk when only when that chunk is written to (\texttt{H5D\_ALLOC\_TIME\_INCR}). For unfiltered datasets where the file is open with write access in parallel, early allocation is forced on.
 
-The code path for early allocation is somewhat convoluted and is worth covering here. The central function for dataset allocation is \texttt{H5D\_\_alloc\_storage()}, which is called on dataset creation with early allocation via \texttt{H5D\_\_update\_oh\_info()} and \texttt{H5D\_\_layout\_oh\_create()}. This function works in two phases and uses switch statements to handle different layouts differently, instead of implementing a layout callback interface like other operations. For contiguous datasets, the first phase allocates space in the file while the second phase writes the fill value if appropriate. For compact datasets, the first phase allocates a memory buffer for the data and the second phase writes the fill value. For chunked datasets, the first phase allocates the root of the chunk index using \texttt{H5D\_\_chunk\_create()}, and the second phase allocates all the chunks (and adds them to the index) using \texttt{H5D\_\_chunk\_allocate()} (called by \texttt{H5D\_\_init\_storage()}) if the allocation time is not \texttt{H5D\_ALLOC\_TIME\_INCR}. Virtual datasets do nothing here since they store no data of their own.
+The code path for early allocation is somewhat convoluted and is worth covering here. The central function for dataset allocation is \func{H5D__alloc_storage}, which is called on dataset creation with early allocation via \func{H5D__update_oh_info} and \func{H5D__layout_oh_create}. This function works in two phases and uses switch statements to handle different layouts differently, instead of implementing a layout callback interface like other operations. For contiguous datasets, the first phase allocates space in the file while the second phase writes the fill value if appropriate. For compact datasets, the first phase allocates a memory buffer for the data and the second phase writes the fill value. For chunked datasets, the first phase allocates the root of the chunk index using \func{H5D__chunk_create}, and the second phase allocates all the chunks (and adds them to the index) using \func{H5D__chunk_allocate} (called by \func{H5D__init_storage}) if the allocation time is not \texttt{H5D\_ALLOC\_TIME\_INCR}. Virtual datasets do nothing here since they store no data of their own.
 
 The "none" and "single" indexes work differently for allocation since they don't have a real index, and there is code in \texttt{H5Dchunk.c} added specifically to support the none index, subverting the index callback layer. The none index, since it is only used with early allocation, allocates space for all chunks in the index \texttt{create} callback, as called by \texttt{H5D\_\_chunk\_create()}. Then later, when allocating chunks in \texttt{H5D\_\_chunk\_file\_alloc()}, as called by \texttt{H5D\_\_chunk\_allocate()}, the library checks for use of the none index and, if it is in use, avoids actually allocating space for the chunk since it was already allocated in the \texttt{create} callback. The single index inverts this, and does not do anything in the \texttt{create} callback, leaving the index address undefined, and instead fills in the index address (with the address of the chunk) when the (single) chunk is allocated.
 
@@ -885,7 +885,7 @@ Opened handles to datatypes are represented by the top-level \texttt{H5T\_t} str
 
 If an in-memory datatype object is a handle to a committed datatype, that committed datatype object will be accessible through the \texttt{vol\_obj} pointer on the top-level datatype struct. For the native VOL, this VOL object's 'data' field will be a copy of the datatype's \texttt{H5T\_t} structure.
 
-Committed datatype objects can be removed from storage with \texttt{H5Ldelete()} (formerly \texttt{H5Gunlink()}). Although the datatype cannot be directly opened after this call is made, the library will not actually free the datatype's resources while other objects that reference it still exist.
+Committed datatype objects can be removed from storage with \func{H5Ldelete} (formerly \func{H5Gunlink}). Although the datatype cannot be directly opened after this call is made, the library will not actually free the datatype's resources while other objects that reference it still exist.
 
     \item Modification of Datatypes
 
@@ -894,7 +894,7 @@ Control of datatypes' modifiability is implemented through the state field \text
 \begin{table}[h!]
 \begin{tabular}{||c|m{0.7\textwidth}||}
 \hline
-\textbf{Datatype State} & \textbf{Description} \\  [0.5ex] 
+\textbf{Datatype State} & \textbf{Description} \\  [0.5ex]
 \hline\hline
 Transient & Transient datatype. Modifiable and closable by user. \\
 \hline
@@ -911,45 +911,45 @@ Open & Committed datatype that is open in-memory. \\
 \label{table:datatype-states}
 \end{table}
 
-Using \texttt{H5Tcopy()} on a datatype always returns a copy with a transient, modifiable state.
+Using \func{H5Tcopy} on a datatype always returns a copy with a transient, modifiable state.
 
     \item Datatypes of objects
 
 If an object is created with a transient datatype, the objects stores a datatype message describing the datatype in its object header. If an object is created with a committed datatype, then the object stores a pointer to the committed datatype's object header. If multiple objects share the same committed datatype, the same object in storage is shared between them.
 
-For objects with transient datatypes, functions that get the datatype associated with an object, such as \texttt{H5*get\_type()}, return a copy. For objects with a committed datatype, these functions return a transient reference to their committed datatype.
+For objects with transient datatypes, functions that get the datatype associated with an object, such as \func{H5*get_type}, return a copy. For objects with a committed datatype, these functions return a transient reference to their committed datatype.
 
     \item Datatype derivation: atomic vs. composite
 
-Atomic strings and opaque types are created through \texttt{H5Tcreate()}. Other atomic datatypes are derived by using \texttt{H5Tcopy()} on predefined types. The derivation of a composite datatype varies by which category of composite is being created. 
+Atomic strings and opaque types are created through \func{H5Tcreate}. Other atomic datatypes are derived by using \func{H5Tcopy} on predefined types. The derivation of a composite datatype varies by which category of composite is being created.
 
-Compound datatypes are created through \texttt{H5Tcreate()}, followed by the insertion of individual fields with \texttt{H5Tinsert()}. The compound datatype struct, \texttt{H5T\_compnd\_t}, stores information about its member datatypes, \texttt{H5T\_cmemb\_t}, in a contiguous array. New members are appended to the end of the array. %If more space is required, the amount of allocated space is doubled at member insertion time.
+Compound datatypes are created through \func{H5Tcreate}, followed by the insertion of individual fields with \func{H5Tinsert}. The compound datatype struct, \texttt{H5T\_compnd\_t}, stores information about its member datatypes, \texttt{H5T\_cmemb\_t}, in a contiguous array. New members are appended to the end of the array. %If more space is required, the amount of allocated space is doubled at member insertion time.
 
-Other composite datatypes are created, with a specified 'base' type, through the dedicated API functions \texttt{H5T[array/vlen/enum]\_create()}. The base type is stored in the \texttt{parent} field of the shared type information structure. If a datatype is itself a base type, then its \texttt{parent} field is \texttt{NULL}.
+Other composite datatypes are created, with a specified 'base' type, through the dedicated API functions \func{H5T[array/vlen/enum]_create}. The base type is stored in the \texttt{parent} field of the shared type information structure. If a datatype is itself a base type, then its \texttt{parent} field is \texttt{NULL}.
 
 The atomic or composite nature of a datatype is stored in its shared \texttt{type} field, which specifies which field in the shared type information structure's union \texttt{u} is meaningfully populated.
 
     \item Native datatypes \& standard datatypes
 
-The library's predefined 'native' datatypes match the size and endianness of the platform that the library is built on. Thus, on different machines or operating systems, the same native datatype may correspond to a different series of bytes in storage. 
+The library's predefined 'native' datatypes match the size and endianness of the platform that the library is built on. Thus, on different machines or operating systems, the same native datatype may correspond to a different series of bytes in storage.
 
-The library's 'standard' datatypes each have a defined endianness and size that is included in their name. For example, the type \texttt{H5T\_STD\_U16BE} will always be a 16-bit in size and have a big-endian byte order, regardless of system architecture. 
+The library's 'standard' datatypes each have a defined endianness and size that is included in their name. For example, the type \texttt{H5T\_STD\_U16BE} will always be a 16-bit in size and have a big-endian byte order, regardless of system architecture.
 
-Native predefined datatypes are first defined in \texttt{H5T\_\_init\_native\_[float\_types/internal]()}, and non-native predefined types are derived from them afterwards during initialization of the datatype module.
+Native predefined datatypes are first defined in \func{H5T__init_native_[float_types/internal]}, and non-native predefined types are derived from them afterwards during initialization of the datatype module.
 
 The macros used to access predefined datatypes evaluate to global library IDs, with a check that ensures the library is initialized before any operations are performed.
 
 %\item Compile-time detection of native types
-    
-%At library compile time, the builtin C types are checked for their size and endianness on the current platform. During initialization of the \texttt{H5T} module, the library creates predefined datatypes matching these native types, which can be accessed through macros of the form \texttt{H5T\_NATIVE\_<TYPE>}. 
-        
+
+%At library compile time, the builtin C types are checked for their size and endianness on the current platform. During initialization of the \texttt{H5T} module, the library creates predefined datatypes matching these native types, which can be accessed through macros of the form \texttt{H5T\_NATIVE\_<TYPE>}.
+
     \item Datatype life cycle (CRUD)
 
 The API-exposed aspects of the datatype life cycle of are summarized in Figure~\ref{fig:datatype-life-cycle}.
 
-Transient datatypes are created by a function of the form \texttt{H5T*create()} or \texttt{H5Tcopy()}. Copies of transient datatypes are returned from copying datatypes or querying the datatypes of objects with transient datatypes.
+Transient datatypes are created by a function of the form \func{H5T*create} or \func{H5Tcopy}. Copies of transient datatypes are returned from copying datatypes or querying the datatypes of objects with transient datatypes.
 
-While the API's \texttt{H5Tcopy()} always create a datatype with the transient state, the internal \texttt{H5T\_copy()} may, depending on the parameters it is given, perform a full copy resulting in a non-transient datatype.
+While the API's \func{H5Tcopy} always create a datatype with the transient state, the internal \func{H5T_copy} may, depending on the parameters it is given, perform a full copy resulting in a non-transient datatype.
 
 \begin{figure}
 \centering
@@ -960,29 +960,29 @@ While the API's \texttt{H5Tcopy()} always create a datatype with the transient s
 
 If a transient datatype is committed, the \texttt{vol\_obj} field of its shared information struct is populated with a copy of itself that is stored on disk, and the datatype's handle becomes a transient reference to the stored datatype. A transient reference to a stored datatype is also obtained when querying the datatype of an object with a committed datatype.
 
-A committed datatype will be slated for removal from the file by \texttt{H5Ldelete()} (or the deprecated \texttt{H5Gunlink()}) if no other objects reference it. If it is unlinked and the objects that reference it are later deleted, the datatype's memory will be marked as free by the free space manager at that time. 
+A committed datatype will be slated for removal from the file by \func{H5Ldelete} (or the deprecated \func{H5Gunlink}) if no other objects reference it. If it is unlinked and the objects that reference it are later deleted, the datatype's memory will be marked as free by the free space manager at that time.
 
     \item Alignment
 
-Different platforms may have different byte alignment restrictions when placing types within structures. The \texttt{HOFFSET} macro should be used when creating a compound type in order to align the inserted fields with any automatically added bytes of padding. 
+Different platforms may have different byte alignment restrictions when placing types within structures. The \texttt{HOFFSET} macro should be used when creating a compound type in order to align the inserted fields with any automatically added bytes of padding.
 
-Alignment of stored fields is not necessary when storing data structures on disk, and so the padding bytes can be removed to increase storage efficiency by `packing' the datatype. Compound types can be packed with \texttt{H5Tpack()} to create storage-optimized unaligned versions. \texttt{H5Tpack()} directly modifies the datatype it is given, so it should usually be preceded by \texttt{H5Tcopy()}. Note that a packed datatype will usually be unable to describe in-memory data.
+Alignment of stored fields is not necessary when storing data structures on disk, and so the padding bytes can be removed to increase storage efficiency by `packing' the datatype. Compound types can be packed with \func{H5Tpack} to create storage-optimized unaligned versions. \func{H5Tpack} directly modifies the datatype it is given, so it should usually be preceded by \func{H5Tcopy}. Note that a packed datatype will usually be unable to describe in-memory data.
 
     \item Endianess
-    
+
 A platform that stores the most significant byte of a number at the smallest memory address is 'big-endian', and a platform that stores the least significant byte at the smallest memory address is 'little-endian.' The HDF5 library determines during its configuration which convention the current platform uses, and stores that as the 'native' convention, used by predefined types such as \texttt{H5T\_NATIVE\_INT}.
-        
+
     \item Datatype hard and soft conversions
 
 Each datatype conversion function has a 'hard' or 'soft' persistence. The persistence of a conversion function determines what source and destination datatypes it will be used for. A hard conversion function will only be used for the specific datatypes it is registered for, while a soft conversion function will be applied to any datatypes that match the classes of the source and destination types it is registered for.
 
 A new hard conversion function will overwrite any previous conversion functions for the provided types, and a new soft conversion function will overwrite the conversion functions for any types to which it is applicable that do not already have a hard conversion function.
-        
+
     \item Variable length datatypes
 
-Because the total amount of storage space needed for objects with a variable length datatype cannot be known ahead of time and may change, data with a variable length type is stored in the file's global heap, rather than in the data object. The metadata describing the variable-length type itself is stored in a Datatype Message in an object's header, just as for non-variable-length datatypes. 
+Because the total amount of storage space needed for objects with a variable length datatype cannot be known ahead of time and may change, data with a variable length type is stored in the file's global heap, rather than in the data object. The metadata describing the variable-length type itself is stored in a Datatype Message in an object's header, just as for non-variable-length datatypes.
 
-As a derived type, a variable-length datatype stores a pointer to its base datatype in the \texttt{parent} field of its shared type information structure. 
+As a derived type, a variable-length datatype stores a pointer to its base datatype in the \texttt{parent} field of its shared type information structure.
 
     \item Reference datatypes
 
@@ -990,11 +990,11 @@ Reference types are internally handled slightly differently than other 'complex'
 
     \item Datatype serialization
 
-Datatype serialization to and from datatype messages is performed by the encode/decode callbacks on the datatype message class, \texttt{H5O\_\_dtype\_[encode/decode]()}. It is also exposed as part of the API through \texttt{H5Tencode()/H5Tdecode()}. For atomic datatypes, encoding and decoding are accomplished non-recursively. For compound
+Datatype serialization to and from datatype messages is performed by the encode/decode callbacks on the datatype message class, \func{H5O__dtype_[encode/decode]}. It is also exposed as part of the API through \func{H5Tencode/H5Tdecode}. For atomic datatypes, encoding and decoding are accomplished non-recursively. For compound
 types, a separate recursive call encodes each member field of the overall datatype. For arrays, variable-length types and enums a single recursive call is used to encode the base type.
 
     \item Addition of new native types
-    
+
 While the library allows applications to create their own custom datatypes, there are some reasons why a native datatype may be desired. For example, two applications may make different choices for how to implement complex numbers as a compound datatype, decreasing the portability of the data. For those interested in the process of introducing new native datatypes to the library, RFC THG 2015-04-29 ~\cite{rfc20150429}, specifically section 3.1, details which parts of the library and tools must be changed for compatibility with a new native datatype.
 
 \end{itemize}
@@ -1006,17 +1006,17 @@ While the library allows applications to create their own custom datatypes, ther
 \begin{itemize}
     \item Data filter pipeline
 
-Data filters are used to manipulate data. The HDF5 library provides several built-in filters to allow for compression ({\footnotesize\texttt{H5Z\_FILTER\_DEFLATE}, \texttt{H5Z\_FILTER\_SZIP}, \texttt{H5Z\_FILTER\_NBIT}, \texttt{H5Z\_FILTER\_SCALEOFFSET}}), shuffling ({\footnotesize\texttt{H5Z\_FILTER\_SHUFFLE}}), and error checking ({\footnotesize\texttt{H5Z\_FILTER\_FLETCHER32}}). While filters can be used individually, they can also be stacked into a filter pipeline. Filters for contiguous datasets are not currently supported because implementing random access for partial I/O is difficult, and compact datasets are also not supported because the potential gains from filters are negligible on such small datasets. Theoretically, the maximum number of filter applications should be unlimited, but because each filter uses a bit in a 32-bit field, the actual maximum number of filter applications is 32. 
+Data filters are used to manipulate data. The HDF5 library provides several built-in filters to allow for compression ({\footnotesize\texttt{H5Z\_FILTER\_DEFLATE}, \texttt{H5Z\_FILTER\_SZIP}, \texttt{H5Z\_FILTER\_NBIT}, \texttt{H5Z\_FILTER\_SCALEOFFSET}}), shuffling ({\footnotesize\texttt{H5Z\_FILTER\_SHUFFLE}}), and error checking ({\footnotesize\texttt{H5Z\_FILTER\_FLETCHER32}}). While filters can be used individually, they can also be stacked into a filter pipeline. Filters for contiguous datasets are not currently supported because implementing random access for partial I/O is difficult, and compact datasets are also not supported because the potential gains from filters are negligible on such small datasets. Theoretically, the maximum number of filter applications should be unlimited, but because each filter uses a bit in a 32-bit field, the actual maximum number of filter applications is 32.
 
-Users can also define their own filters to customize data processing further, which provides a high degree of flexibility for tailoring the pipeline to specific needs. As long as the filter is associated with a dataset upon the creation of that dataset, can be used with chunked data (\texttt{H5D\_CHUNKED}), and is applied to each individual chunk in a \texttt{H5D\_CHUNKED} dataset, then the custom filter may be registered and used. This is done through a two-step process. First, three callback functions must be written. The first is \texttt{H5Z\_can\_apply\_func\_t}, which checks against the dataset's dataset creation property list, datatype, and dataspace. The next is \texttt{H5Z\_set\_local\_func\_t}, which sets local flags and fields using the aforementioned three parameters. The last is \texttt{H5Z\_func\_t}, which takes in a bit vector of flags, the number of elements in the array of auxiliary data for the filter, the array of auxiliary data itself, the number of bytes in the filter buffer, the size of the filter buffer, and the filter buffer itself, and uses the fields set by the previous method to return the altered buffer back to the user along with its size. 
+Users can also define their own filters to customize data processing further, which provides a high degree of flexibility for tailoring the pipeline to specific needs. As long as the filter is associated with a dataset upon the creation of that dataset, can be used with chunked data (\texttt{H5D\_CHUNKED}), and is applied to each individual chunk in a \texttt{H5D\_CHUNKED} dataset, then the custom filter may be registered and used. This is done through a two-step process. First, three callback functions must be written. The first is \texttt{H5Z\_can\_apply\_func\_t}, which checks against the dataset's dataset creation property list, datatype, and dataspace. The next is \texttt{H5Z\_set\_local\_func\_t}, which sets local flags and fields using the aforementioned three parameters. The last is \texttt{H5Z\_func\_t}, which takes in a bit vector of flags, the number of elements in the array of auxiliary data for the filter, the array of auxiliary data itself, the number of bytes in the filter buffer, the size of the filter buffer, and the filter buffer itself, and uses the fields set by the previous method to return the altered buffer back to the user along with its size.
 
-Once the above callbacks have been defined, the filter must be registered using \texttt{H5Zregister()}. \texttt{H5Zregister()} takes a pointer to a buffer for the class data structure and returns a \texttt{H5Z\_class\_t} (a two-byte identification number), which can be either \texttt{H5Z\_class1\_t} or \texttt{H5Z\_class2\_t}. 
+Once the above callbacks have been defined, the filter must be registered using \func{H5Zregister}. \func{H5Zregister} takes a pointer to a buffer for the class data structure and returns a \texttt{H5Z\_class\_t} (a two-byte identification number), which can be either \texttt{H5Z\_class1\_t} or \texttt{H5Z\_class2\_t}.
 
 \texttt{H5Z\_class\_t} is a macro that maps to either of the above two versions depending on the needs of the application. \texttt{H5Z\_class\_t}s start from 0-255, and these values are reserved for official HDF5 filters such as the ones listed above. 256-511 include the numbers that may be used for temporary testing. Lastly, 512-65535 is reserved for future assignments. If the filter is set as optional, then the library will skip the filter while proceeding through the filter pipeline.
 
-At the center of the data filter pipeline is \texttt{H5Z\_pipeline()}, which is what carries out the pipeline. This method processes filters in definition order, or reverse order if the \texttt{H5Z\_FLAG\_REVERSE} flag is set. It takes in a \texttt{H5O\_pline\_t}, an unsigned int for flags, an array of unsigned ints for a filter mask, a \texttt{H5Z\_EDC\_t}, an \texttt{H5Z\_cb\_t} instance, a \texttt{size\_t} nbytes, which holds the number of bytes to filter, a \texttt{size\_t} buf\_size, which holds the total allocated size of the buffer, and buf, which is the buffer itself. This method will first check if the filter is registered, and if it is not already registered, it will try to load it dynamically and then register it. Once this is done, it will go through the list of filters in definition order and attempt to apply each filter to the data.
+At the center of the data filter pipeline is \func{H5Z_pipeline}, which is what carries out the pipeline. This method processes filters in definition order, or reverse order if the \texttt{H5Z\_FLAG\_REVERSE} flag is set. It takes in a \texttt{H5O\_pline\_t}, an unsigned int for flags, an array of unsigned ints for a filter mask, a \texttt{H5Z\_EDC\_t}, an \texttt{H5Z\_cb\_t} instance, a \texttt{size\_t} nbytes, which holds the number of bytes to filter, a \texttt{size\_t} buf\_size, which holds the total allocated size of the buffer, and buf, which is the buffer itself. This method will first check if the filter is registered, and if it is not already registered, it will try to load it dynamically and then register it. Once this is done, it will go through the list of filters in definition order and attempt to apply each filter to the data.
 
-It is important to note that functions that allocate and free memory must be treated with care, since if there is a mismatch between the memory allocators used in the library and any memory that might be moved around by a filter, there may be problems. This issue can be resolved via the \texttt{H5allocate\_memory()} and \texttt{H5free\_memory()} functions, but if these methods are used, then the filter would have to be linked to a specific library version, which may be problematic. 
+It is important to note that functions that allocate and free memory must be treated with care, since if there is a mismatch between the memory allocators used in the library and any memory that might be moved around by a filter, there may be problems. This issue can be resolved via the \func{H5allocate_memory} and \func{H5free_memory} functions, but if these methods are used, then the filter would have to be linked to a specific library version, which may be problematic.
 
     \item Data transforms
 
@@ -1054,13 +1054,13 @@ Dataspace extents can be one of three types: scalar (\texttt{H5S\_SCALAR}), simp
 
     \item Dataspace selections
 
-Dataspace selections are used to select a subset of elements within the dataspace extent. They can be used to perform an operation on these elements, or simply to describe the subset (such as with a region reference). There are multiple types of selections, each of which must be defined by implementing the selection class, consisting of a series of callback functions that must be implemented. In addition, there are other functions that deal with individual selection types directly (such as \texttt{H5Sselect\_hyperslab()}) or that deal with multiple selection types (such as \texttt{H5Sselect\_project\_intersection()}).
+Dataspace selections are used to select a subset of elements within the dataspace extent. They can be used to perform an operation on these elements, or simply to describe the subset (such as with a region reference). There are multiple types of selections, each of which must be defined by implementing the selection class, consisting of a series of callback functions that must be implemented. In addition, there are other functions that deal with individual selection types directly (such as \func{H5Sselect_hyperslab}) or that deal with multiple selection types (such as \func{H5Sselect_project_intersection}).
 
     \item Hyperslab selections
 
 Hyperslab selections represent an N-dimensional hyperrectangle of elements within the extent (where N is equal to the rank of the extent), a regular pattern of these hyperrectangles, or a combination of multiple hyperrectangles and/or patterns.
 
-Hyperslabs are primarily constructed through the API using \texttt{H5Select\_hyperslab()}, which takes, as parameters, \texttt{start}, \texttt{stride}, \texttt{count}, and \texttt{block}, all of which are arrays of length matching the rank of the dataspace extent. \texttt{start} indicates the element at which the hyperslab begins (i.e. the element closest to position 0 in each dimension). \texttt{stride} indicates the spacing between the starting position of regularly spaced blocks in each dimension. \texttt{count} indicates the number of regularly spaced blocks in each dimension. \texttt{block} indicates the size of each regularly spaced block. In addition, hyperslabs can be combined in different ways using the \texttt{op} parameter, potentially yielding hyperslabs that cannot be represented using a single set of \texttt{start}, \texttt{stride}, \texttt{count}, and \texttt{block} arrays.
+Hyperslabs are primarily constructed through the API using \func{H5Select_hyperslab}, which takes, as parameters, \texttt{start}, \texttt{stride}, \texttt{count}, and \texttt{block}, all of which are arrays of length matching the rank of the dataspace extent. \texttt{start} indicates the element at which the hyperslab begins (i.e. the element closest to position 0 in each dimension). \texttt{stride} indicates the spacing between the starting position of regularly spaced blocks in each dimension. \texttt{count} indicates the number of regularly spaced blocks in each dimension. \texttt{block} indicates the size of each regularly spaced block. In addition, hyperslabs can be combined in different ways using the \texttt{op} parameter, potentially yielding hyperslabs that cannot be represented using a single set of \texttt{start}, \texttt{stride}, \texttt{count}, and \texttt{block} arrays.
 
 Internally, hyperslabs are represented in one of two ways. Hyperslabs that can be represented using a single set of \texttt{start}, \texttt{stride}, \texttt{count}, and \texttt{block} arrays are called \textit{regular} hyperslabs and are represented using these arrays. Other, irregular, hyperslabs are represented using a data structure called a \textit{span tree}.
 
@@ -1083,23 +1083,23 @@ Point selections are a simple linear list of individual elements that are select
 
     \item Selection iterators and iteration operations
 
-A selection iterator is a structure used to perform operations that iterate over a dataspace, such as generating offset/length pairs of selected elements (\texttt{H5S\_get\_seq\_list()}) or making a callback for each element selected (\texttt{H5S\_select\_iterate()}. The selection iterator includes another generic interface, \texttt{H5S\_sel\_iter\_class\_t}, that contains callback functions that must be implemented by each selection type. In addition, hyperslab and point selections store their own data in the selection iterator struct. These callbacks are used by the higher level code in \texttt{H5Sselect.c} to implement these operations. The iterator operations can also be called directly by external packages.
+A selection iterator is a structure used to perform operations that iterate over a dataspace, such as generating offset/length pairs of selected elements (\func{H5S_get_seq_list}) or making a callback for each element selected (\func{H5S_select_iterate}. The selection iterator includes another generic interface, \texttt{H5S\_sel\_iter\_class\_t}, that contains callback functions that must be implemented by each selection type. In addition, hyperslab and point selections store their own data in the selection iterator struct. These callbacks are used by the higher level code in \texttt{H5Sselect.c} to implement these operations. The iterator operations can also be called directly by external packages.
 
     \item Projections and the "shapesame" case
 
 When performing I/O with selections, the library is given an extent and selection for the memory buffer, and a selection for the file (the extent for the file is implied by the dataset size). For contiguous datasets, the generic case here can be easily handled using selection iteration. The elements selected in the memory can be matched up 1-to-1 with elements selected in the file by the order within the selection, so the Nth element selected in memory is written to/read from the Nth element selected in the file. For chunked datasets, however, this becomes more complicated. The dataset in the file is broken up into chunks that may not be contiguous within the serialized (flattened) extent of the dataset, but the memory buffer is not broken up in the same way (indeed, the memory buffer need not have the same extent or even rank as the dataset). We therefore need to break the file selection up into a series of selections, one for each chunk. It is easy to do this using selection interfaces that compute the intersection of two selections. However, we also need to compute the selection in memory that corresponds to the selection within each chunk. Since the chunks may not be contiguous in the serialized extent, we can no longer rely on the 1-to-1 mapping used for contiguous datasets.
 
-However, there is a shortcut we can take when a certain common condition is fulfilled. Often, the selections in the memory and file have the same shape, possibly with some offset between the two. If this is the case, we can simply, for each chunk, compute the intersection ("and") of that chunk with the file selection, then copy that intersection to the memory space, and apply any offset computed from comparing the overall file and memory selections. This copied intersection, called a projection, is now a selection containing the memory elements that match, in the correct order, the file elements selected that are in the current chunk. The dataset code then uses these file and memory chunk selection pairs to construct the I/O operation. The function used to check if two selections have the same shape is \texttt{H5S\_select\_shape\_same()} (wrapped by the macro \texttt{H5S\_SELECT\_SHAPE\_SAME()}), and the function used to construct the projected dataspace is \texttt{H5S\_select\_construct\_projection()}.
+However, there is a shortcut we can take when a certain common condition is fulfilled. Often, the selections in the memory and file have the same shape, possibly with some offset between the two. If this is the case, we can simply, for each chunk, compute the intersection ("and") of that chunk with the file selection, then copy that intersection to the memory space, and apply any offset computed from comparing the overall file and memory selections. This copied intersection, called a projection, is now a selection containing the memory elements that match, in the correct order, the file elements selected that are in the current chunk. The dataset code then uses these file and memory chunk selection pairs to construct the I/O operation. The function used to check if two selections have the same shape is \func{H5S_select_shape_same} (wrapped by the macro \func{H5S_SELECT_SHAPE_SAME}), and the function used to construct the projected dataspace is \func{H5S_select_construct_projection}.
 
 While the selections must have the same shape for this case to work, it is actually possible for the extents to be different ranks. If we have selections \(A\) and \(B\), with extents of rank \(M\) and \(N\), respectively, where \(M>N\), then \(A\) and \(B\) have the same rank if and only if selection \(A\) spans only a single element in the slowest changing \(M-N\) dimensions, and if \(A\) and \(B\) are identical in the fastest changing \(N\) dimensions, possibly with a constant offset. The library does not currently try to identify cases where the selections could be topologically identical by unrolling one or more dimensions, as this would require a different algorithm to construct the projection. They must actually be the same in the shared dimensions.
 
     \item The project intersection operation
 
-The operation \texttt{H5Sselect\_project\_intersection()} and its corresponding private interface, \texttt{H5S\_select\_project\_intersection()}, is robust but can be confusing due to its complexity. This function takes three dataspaces, each with a selection, and outputs a fourth. Internally, this function is currently only used to implement virtual datasets, but it is also used by some VOL connectors to implement generic I/O with selections on chunked datasets. It may be beneficial in the future to implement chunked I/O using this operation when the shapesame case does not apply.
+The operation \func{H5Sselect_project_intersection} and its corresponding private interface, \func{H5S_select_project_intersection}, is robust but can be confusing due to its complexity. This function takes three dataspaces, each with a selection, and outputs a fourth. Internally, this function is currently only used to implement virtual datasets, but it is also used by some VOL connectors to implement generic I/O with selections on chunked datasets. It may be beneficial in the future to implement chunked I/O using this operation when the shapesame case does not apply.
 
-%\todo[inline]{GH: I think we should make a distinction between `chunks', which is a storage concept, and their counterparts in the dataspace context. How about we call them `tiles'? A tile is the logical place of a chunk in a dataspace. We definitely need a figure to show people an example of how the generic case falls apart.} 
+%\todo[inline]{GH: I think we should make a distinction between `chunks', which is a storage concept, and their counterparts in the dataspace context. How about we call them `tiles'? A tile is the logical place of a chunk in a dataspace. We definitely need a figure to show people an example of how the generic case falls apart.}
 
-In the general case for chunked dataset I/O we cannot simply copy the intersection from file to memory as in the shapesame case. The projected chunk selection in memory can be of a totally different shape from the chunk selection in the file. Instead, we can, for each chunk, calculate the offsets of the selected elements in that chunk within the serialized file selection, then select the elements in the memory space with the matching offsets within the serialized memory selection. This resulting memory chunk selection, which is a subset of the overall memory selection, contains the elements selected in the chunk being processed. An example showing this process for a single chunk of a two-dimensional dataset is shown in Figure~\ref{fig:project-intersection-chunk}. This process is repeated for every chunk that contains any selected elements. 
+In the general case for chunked dataset I/O we cannot simply copy the intersection from file to memory as in the shapesame case. The projected chunk selection in memory can be of a totally different shape from the chunk selection in the file. Instead, we can, for each chunk, calculate the offsets of the selected elements in that chunk within the serialized file selection, then select the elements in the memory space with the matching offsets within the serialized memory selection. This resulting memory chunk selection, which is a subset of the overall memory selection, contains the elements selected in the chunk being processed. An example showing this process for a single chunk of a two-dimensional dataset is shown in Figure~\ref{fig:project-intersection-chunk}. This process is repeated for every chunk that contains any selected elements.
 
 \begin{figure}[h]
 \centering
@@ -1108,7 +1108,7 @@ In the general case for chunked dataset I/O we cannot simply copy the intersecti
 \label{fig:project-intersection-chunk}
 \end{figure}
 
-The general chunked I/O case is supported by \texttt{H5S\_select\_project\_intersection()}, though that function also supports other use cases. \texttt{H5S\_select\_project\_intersection()} does not require that the selection representing the chunk in the above example be rectangular, it can be any selection that can be represented using the HDF5 API. In this function's terminology, the file selection (in the example) is referred to as the "source space", the memory selection is referred to as the "destination space", and the chunk selection is referred to as the "source intersect space". While the above description implies an element-by-element algorithm for calculating the source intersect space, in the case of hyperslabs (possibly combined with an all selection), the library uses span trees to be able to process the selection multiple elements at a time, which is generally much quicker. The project intersection operation can be thought of as projecting the intersection of the source space and the source intersect space onto the destination space, where there is a one-to-one mapping between the source space and the destination space (though they need not have the same shape).
+The general chunked I/O case is supported by \func{H5S_select_project_intersection}, though that function also supports other use cases. \func{H5S_select_project_intersection} does not require that the selection representing the chunk in the above example be rectangular, it can be any selection that can be represented using the HDF5 API. In this function's terminology, the file selection (in the example) is referred to as the "source space", the memory selection is referred to as the "destination space", and the chunk selection is referred to as the "source intersect space". While the above description implies an element-by-element algorithm for calculating the source intersect space, in the case of hyperslabs (possibly combined with an all selection), the library uses span trees to be able to process the selection multiple elements at a time, which is generally much quicker. The project intersection operation can be thought of as projecting the intersection of the source space and the source intersect space onto the destination space, where there is a one-to-one mapping between the source space and the destination space (though they need not have the same shape).
 
 This facility is not currently used by the native library to perform chunk I/O. If the shapesame case does not apply, the library iterates element by element over the selections in the dataset package. However, we would like to investigate using this function for the non-shapesame case in the native library, as we believe it may improve performance. The library currently uses this facility to implement virtual datasets, and some VOL connectors use it to implement chunked I/O. At some point in the future, we may wish to unify the shapesame projection and the project intersection operations.
 
@@ -1123,7 +1123,7 @@ The dataspace code is also used to translate dataspace selections into MPI datat
 \begin{table}[!ht]
 \begin{tabular}{||c|l||}
 \hline
-\textbf{Source File} & \textbf{Description} \\  [0.5ex] 
+\textbf{Source File} & \textbf{Description} \\  [0.5ex]
 \hline\hline
 \texttt{H5Spublic.h} & Public dataspace API \\
 \texttt{H5Sprivate.h} & Private header (internal dataspace API) \\
@@ -1137,7 +1137,7 @@ The dataspace code is also used to translate dataspace selections into MPI datat
 \texttt{H5Smpio.c} & Parallel functionality for constructing MPI datatypes \\
 \texttt{H5Sall.c} & `None' selection type \\
 \texttt{H5Spoint.c} & `Point' selection type \\
-\texttt{H5Sselect.c} & Operations on general hyperslab selections. Often just passes down to the specific selection type. \\  
+\texttt{H5Sselect.c} & Operations on general hyperslab selections. Often just passes down to the specific selection type. \\
 \texttt{H5Stest.c} & Functions used only by the regression test suite \\
 \hline
 \end{tabular}
@@ -1150,7 +1150,7 @@ The dataspace code is also used to translate dataspace selections into MPI datat
 %\begin{table}[h!]
 %\begin{tabular}{||c|l||}
 %\hline
-%\textbf{Source File} & %\textbf{Description} \\  [0.5ex] 
+%\textbf{Source File} & %\textbf{Description} \\  [0.5ex]
 %\hline\hline
 %\texttt{H5Dmpio.c} & \ldots \\
 %\texttt{H5FDmpio.c} & \ldots \\
@@ -1285,17 +1285,17 @@ There are 4 general classes of function that can be overridden relating to infra
 
 It is mandatory for every VOL to implement and register the \texttt{H5VL\_class\_t} struct. This struct outlines the set of methods the VOL overrides. There are various ways to register the \texttt{H5VL\_class\_t} struct. In the library, there are three API routines for VOL registration:
 \begin{enumerate}
-    \item \texttt{H5VLregister\_connector()}: takes as input the class struct pointer directly and registers it with HDF5
-    \item \texttt{H5VLregister\_connector\_by\_name()}: use the plugins interface (H5PL) to locate the VOL by the VOL name
-    \item \texttt{H5VLregister\_connector\_by\_value()}: use the plugins interface (H5PL) to locate the VOL by the connector ID
+    \item \func{H5VLregister_connector}: takes as input the class struct pointer directly and registers it with HDF5
+    \item \func{H5VLregister_connector_by_name}: use the plugins interface (H5PL) to locate the VOL by the VOL name
+    \item \func{H5VLregister_connector_by_value}: use the plugins interface (H5PL) to locate the VOL by the connector ID
 \end{enumerate}
 During registration, the \texttt{initialize} function defined in the VOL class struct will be called if it is non-NULL. This function does not take any parameters -- except an empty property list. It is also only called once throughout the entire lifetime of the VOL and should be used to initialize any library or service required to be initialized exactly once. To pass variables to \texttt{initialize}, VOL authors should define custom environment variables and document them.
 
-In addition, parameters can be passed to the VOL after registration using \texttt{H5VLconnector\_str\_to\_info()}, which takes as input a string that is internally parsed by the VOL's custom \texttt{from\_str} function (defined in \texttt{H5VL\_info\_class\_t}). There is no required structure to this string, although it is best practice to avoid spaces and use `:'or `;' as separators for tokens. More complex parameters should be placed in custom environment variables instead. In \texttt{from\_str}, the parameter string will be parsed into a VOL-specific info struct, which can be accessed, copied, and queried using methods in \texttt{H5VL\_info\_class\_t}. An example of a parameter string to initialize a theoretical VOL named PFS that stores HDF5 data in a file on a PFS could be `username:/path/to/ssh/key:/path/to/file.txt'.
+In addition, parameters can be passed to the VOL after registration using \func{H5VLconnector_str_to_info}, which takes as input a string that is internally parsed by the VOL's custom \texttt{from\_str} function (defined in \texttt{H5VL\_info\_class\_t}). There is no required structure to this string, although it is best practice to avoid spaces and use `:'or `;' as separators for tokens. More complex parameters should be placed in custom environment variables instead. In \texttt{from\_str}, the parameter string will be parsed into a VOL-specific info struct, which can be accessed, copied, and queried using methods in \texttt{H5VL\_info\_class\_t}. An example of a parameter string to initialize a theoretical VOL named PFS that stores HDF5 data in a file on a PFS could be `username:/path/to/ssh/key:/path/to/file.txt'.
 
 HDF5 can also transparently locate and register a VOL through the \texttt{HDF5\_PLUGIN\_PATH} and \\ \texttt{HDF5\_VOL\_CONNECTOR} environment variables. \texttt{HDF5\_PLUGIN\_PATH} tells HDF5 the directories to search for VOL libraries and \texttt{HDF5\_VOL\_CONNECTOR} holds a string containing the name and parameterization of a particular VOL to load. H5PL will split this string by spaces to determine the (VOL name, parameter) pair. Only a single VOL and its parameters can be specified using the environment variable. If the parameter string contains spaces, anything after the second space will be deleted. An example of \texttt{HDF5\_VOL\_CONNECTOR} for initializing the example PFS VOL could be `PFS username:/path/to/ssh/key:/path/to/file.txt', where PFS is the VOL name defined in the class struct. H5PL then automatically loads and registers the VOL, implicitly calling \texttt{H5VLregister\_connector\_by\_name()} with the VOL name as input and \\ \texttt{H5VLconnector\_str\_to\_info()} with the parameter string as input if it is not empty. \texttt{H5Pset\_vol()} will then also be called to duplicate the info struct using the \texttt{copy} method defined in \texttt{H5VL\_info\_class\_t} and store in a property list tracked internally by HDF5. Generally, the info struct will be either passed directly to most VOL functions or queried from a property list.
 
-To be compatible with H5PL, VOLs must implement the \texttt{H5PLget\_plugin\_type()} and \\ \texttt{H5PLget\_plugin\_info()} methods. HDF5 automatically searches for these methods and requires their signatures to be exactly correct. An example code is shown in Listing~\ref{lst:vol-init}.
+To be compatible with H5PL, VOLs must implement the \func{H5PLget_plugin_type} and \\ \func{H5PLget_plugin_info} methods. HDF5 automatically searches for these methods and requires their signatures to be exactly correct. An example code is shown in Listing~\ref{lst:vol-init}.
 
 \begin{listing}[!ht]
 \centering
@@ -1350,7 +1350,7 @@ static herr_t H5VL_compress_vol_dataset_write(
   for (size_t i = 0; i < count; i++)
     compress(objs[i]->compress_method_, buf[i], max_size[i], compressed[i]);
   hid_t ret_value = H5VLdataset_write(
-    count, (void**)next_objs, objs[0]->next_vol_id_, mem_type_id, 
+    count, (void**)next_objs, objs[0]->next_vol_id_, mem_type_id,
     mem_space_id, file_space_id, plist_id, compressed, req);
   // Free compressed & return
 }
@@ -1369,7 +1369,7 @@ static herr_t H5VL_compress_vol_dataset_read(/** Similar to write */) {
 
 \subsubsection{Asynchronous VOL Operations}
 
-VOLs can internally spawn thread pools to perform asynchronous operations and remove overhead such as locking and I/O stalls from the critical path. HDF5 does not provide a thread pool API and expects users will use an external threading library, such as pthreads or Argobots. Many VOL functions such as \texttt{H5VLdataset\_write()} are either synchronous or asynchronous depending on if an HDF5 request struct is passed to it. \texttt{H5VL\_request\_class\_t} contains methods for waiting, canceling, completing, and freeing async requests. The VOL can define a custom request struct, taking as input the HDF request struct, and return it from VOL functions that behave asynchronously.
+VOLs can internally spawn thread pools to perform asynchronous operations and remove overhead such as locking and I/O stalls from the critical path. HDF5 does not provide a thread pool API and expects users will use an external threading library, such as pthreads or Argobots. Many VOL functions such as \func{H5VLdataset_write} are either synchronous or asynchronous depending on if an HDF5 request struct is passed to it. \texttt{H5VL\_request\_class\_t} contains methods for waiting, canceling, completing, and freeing async requests. The VOL can define a custom request struct, taking as input the HDF request struct, and return it from VOL functions that behave asynchronously.
 
 \subsubsection{Introspecting VOLs}
 

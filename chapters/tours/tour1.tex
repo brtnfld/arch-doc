@@ -44,7 +44,7 @@ group Implicit open/close
  rnote over lib: H5open()
  rnote over lib: H5_init_library() \n- Phase 1 Modules \n- Phase 2 Modules
 
- app -> lib: Application Exit Begins 
+ app -> lib: Application Exit Begins
  rnote over lib: H5close()
  rnote over lib: H5_term_library()
  lib -> app: HDF5 Library Exit Complete
@@ -110,7 +110,7 @@ int main() {
 
 \begin{listing}
 \centering
-\caption{\texttt{H5\_init\_library()} initialization table.}
+\caption{\func{H5_init_library} initialization table.}
 \label{lst:init-table}
 \begin{minted}[linenos]{C}
 struct {
@@ -140,7 +140,7 @@ As the table shows, a few modules (\texttt{H5P,H5VL}) require phased initializat
 
 \begin{listing}
 \centering
-\caption{\texttt{H5VL\_init\_phase2()} initialization table.}
+\caption{\func{H5VL_init_phase2} initialization table.}
 \label{lst:vol2-init-table}
 \begin{minted}[linenos]{C}
 struct {
@@ -162,7 +162,7 @@ struct {
 \end{minted}
 \end{listing}
 
-\texttt{H5VL\_init\_phase2()} concludes the HDF5 library initialization.
+\func{H5VL_init_phase2} concludes the HDF5 library initialization.
 
 Only \texttt{H5[A,D,F,G,L,M,T]} API functions will pass through the VOL layer; all other packages support non-VOL API calls or library internal infrastructure.
 
@@ -187,7 +187,7 @@ int main() {
 \end{minted}
 \end{listing}
 
-\paragraph{Variants.} In Listing~\ref{lst:implicit-init}, a variant of the ``Hello, World!" example is shown. The notable difference is the new function \func{H5get_libversion}, while the previous version had calls to \func{H5open} and \func{H5close}, which have been removed in the new version. It turns out that the HDF5 library initializes itself as needed whenever an application either enters the library through an API function call such as \texttt{H5get\_libversion()}, or when an application evaluates an HDF5 symbol that represents a macro such as \texttt{H5F\_ACC\_RDONLY} or \texttt{H5F\_ACC\_RDWR}, a property-list class identifier such as \texttt{H5P\_FILE\_ACCESS}, a VFD identifier such as \texttt{H5FD\_FAMILY} or \texttt{H5FD\_SEC2}, or a type identifier
+\paragraph{Variants.} In Listing~\ref{lst:implicit-init}, a variant of the ``Hello, World!" example is shown. The notable difference is the new function \func{H5get_libversion}, while the previous version had calls to \func{H5open} and \func{H5close}, which have been removed in the new version. It turns out that the HDF5 library initializes itself as needed whenever an application either enters the library through an API function call such as \func{H5get_libversion}, or when an application evaluates an HDF5 symbol that represents a macro such as \texttt{H5F\_ACC\_RDONLY} or \texttt{H5F\_ACC\_RDWR}, a property-list class identifier such as \texttt{H5P\_FILE\_ACCESS}, a VFD identifier such as \texttt{H5FD\_FAMILY} or \texttt{H5FD\_SEC2}, or a type identifier
 such as \texttt{H5T\_NATIVE\_INT64}.
 
 The library provides a couple of macros that initialize the library as necessary. Library initialization is checked as a side-effect of the \texttt{FUNC\_ENTER\_API*} macros used at the top of most API functions. HDF5 library symbols other than functions are provided through \texttt{\#define}s that use the \texttt{H5OPEN} macro to introduce a library-initialization call (\texttt{H5open()}) at each site where a non-function symbol is used.
@@ -207,10 +207,10 @@ If a developer adds a module that needs to release resources during library shut
 \paragraph{Source code recommended for study.}
 
 \begin{itemize}
-    \item \texttt{H5\_[init,term]\_library()} in \texttt{H5.c}
-    \item \texttt{H5E\_[init,term]\_package()} in \texttt{H5E.c}
-    \item \texttt{H5T\_init(), H5T\_top\_term\_package()} in \texttt{H5T.c}
-    \item \texttt{H5VL\_init\_phase2()} in \texttt{H5VLint.c}
+    \item \func{H5_[init,term]_library} in \texttt{H5.c}
+    \item \func{H5E_[init,term]_package} in \texttt{H5E.c}
+    \item \func{H5T_init, H5T_top_term_package} in \texttt{H5T.c}
+    \item \func{H5VL_init_phase2} in \texttt{H5VLint.c}
 \end{itemize}
 
 \subsection{Summary}

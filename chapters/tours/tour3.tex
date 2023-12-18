@@ -69,11 +69,11 @@ For example, the HDF5 data model instance created by the program in Listing~\ref
 The HDF5 library lets us persist this information in a file system's physical file \texttt{data.h5}.
 In Figure~\ref{fig:io-paths}, we show the major library components involved in the framing of this information and suggest that user metadata and data are treated differently.
 
-Following the Callgrind profile of Listing~\ref{lst:dataset-life-cycle}, a call sequence for \texttt{H5Dcreate()} similar to the one shown in Figure~\ref{fig:tour-3-uml-dset-create-contig} emerges. Notice that we have skipped the VOL layer incantation, which applies to \texttt{H5Dcreate()}, and we have suppressed a few details about object header composition and metadata cache entry pinning, etc. The gist of the call sequence is this:
+Following the Callgrind profile of Listing~\ref{lst:dataset-life-cycle}, a call sequence for \func{H5Dcreate} similar to the one shown in Figure~\ref{fig:tour-3-uml-dset-create-contig} emerges. Notice that we have skipped the VOL layer incantation, which applies to \func{H5Dcreate}, and we have suppressed a few details about object header composition and metadata cache entry pinning, etc. The gist of the call sequence is this:
 
 \begin{enumerate}
     \item As a ``side-effect" of linking the newly minted dataset to the root group, we create a dataset object header conforming to the file format specification~\cite{ffmt}.
-    \item The object header is placed into the file's metadata cache, and the corresponding entry is marked as dirty. That way, it will get flushed/written to the file when the metadata cache is destroyed (\texttt{H5AC\_dest()}), which happens in the wake of \texttt{H5Fclose()}.
+    \item The object header is placed into the file's metadata cache, and the corresponding entry is marked as dirty. That way, it will get flushed/written to the file when the metadata cache is destroyed (\func{H5AC_dest}), which happens in the wake of \func{H5Fclose}.
     \item Finally, the freshly minted dataset's file address and link name are added to the root group's symbol table, and the B-tree index is updated.
 \end{enumerate}
 
@@ -119,7 +119,7 @@ The dataflow for datasets is similar to files in that the in-memory representati
 
 \subsection{Data transfer}\label{sec:data-transfer}
 
-To activate the right portion of Figure~\ref{fig:io-paths}, we call \texttt{H5Dwrite()}, as shown in Listing~\ref{lst:dataset-transfer}. The key elements of the user data journey are captured in Figure~\ref{fig:tour-3-uml-dset-write-contig}. We can see that storage for the data is allocated in the file. There is, however, a twist: the data is not written into the file when \texttt{H5Dwrite()} is called or completed. Because the array to be written is so small, the data is copied to a buffer, and the write is delayed until the dataset is closed, when it is flushed (\texttt{H5D\_\_flush\_sieve\_buf()}). The native VOL uses a so-called data sieve buffer to reduce the number of small I/O operations. (We will have more to say about the sieve buffer in section~\ref{sec:tour6}.)
+To activate the right portion of Figure~\ref{fig:io-paths}, we call \func{H5Dwrite}, as shown in Listing~\ref{lst:dataset-transfer}. The key elements of the user data journey are captured in Figure~\ref{fig:tour-3-uml-dset-write-contig}. We can see that storage for the data is allocated in the file. There is, however, a twist: the data is not written into the file when \func{H5Dwrite} is called or completed. Because the array to be written is so small, the data is copied to a buffer, and the write is delayed until the dataset is closed, when it is flushed (\func{H5D__flush_sieve_buf}). The native VOL uses a so-called data sieve buffer to reduce the number of small I/O operations. (We will have more to say about the sieve buffer in section~\ref{sec:tour6}.)
 
 \begin{listing}
 \centering
@@ -270,7 +270,7 @@ The gist is this:
 \begin{enumerate}
     \item The different storage layout (chunked) is noted in the dataset's object header at creation time. The chunk locations are tracked with a B-tree index. Not that, as in the contiguous case, chunk allocation is delayed until any actual data is written.
     \item The hyperslab selection construction is a 100\% in-memory metadata affair and is \textit{not} routed through the VOL interface.
-    \item The function \texttt{H5Dwrite()} is responsible for allocating chunks and iterating through selections. However, data is not written immediately if the array and chunk sizes are small. Instead, it is written only after the dataset is closed and flushed. The actual writing of user data is done by \texttt{H5F\_shared\_block\_write()}. After writing, the chunk index is updated.
+    \item The function \func{H5Dwrite} is responsible for allocating chunks and iterating through selections. However, data is not written immediately if the array and chunk sizes are small. Instead, it is written only after the dataset is closed and flushed. The actual writing of user data is done by \func{H5F_shared_block_write}. After writing, the chunk index is updated.
 \end{enumerate}
 
 While we have not yet explored the native VOLs facilities for datatype conversion, data filtering, or data caching and buffering, we have seen enough to corroborate the claim that the native VOL does not alter user data. Instead, it frames the data and augments them with metadata to create a self-describing package called a native HDF5 file. In section~\ref{sec:user-metadata}, we explore how an everyday kind of user-metadata, attributes, fares under the scheme outlined in Figure~\ref{fig:io-paths}.
@@ -302,7 +302,7 @@ int main() {
 \end{minted}
 \end{listing}
 
-\paragraph{Attributes as objects} Listing~\ref{lst:attribute-life-cycle} shows the life cycle of an attribute. It is created on a parent object, in this case (the root group of) the file \texttt{attrib.1.h5}. It is created with a dataspace and datatype defining the data it stores. Data is written to the attribute in storage, and then the in-memory object for the attribute is closed. 
+\paragraph{Attributes as objects} Listing~\ref{lst:attribute-life-cycle} shows the life cycle of an attribute. It is created on a parent object, in this case (the root group of) the file \texttt{attrib.1.h5}. It is created with a dataspace and datatype defining the data it stores. Data is written to the attribute in storage, and then the in-memory object for the attribute is closed.
 
 \begin{listing}
 \centering
@@ -316,7 +316,7 @@ int main() {
   H5Pset_libver_bounds(fapl_id, H5F_LIBVER_V18, H5F_LIBVER_LATEST);
   /* Max in compact storage = 2, min in dense storage = 2 */
   H5Pset_attr_phase_change(fcpl_id, 2, 2);
-  hid_t file_id = 
+  hid_t file_id =
     H5Fcreate("attrib.2.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl_id);
   hid_t scalar = H5Screate(H5S_SCALAR);
   hid_t attr_id1 =
@@ -352,7 +352,7 @@ When an attribute is opened, the library handle points to an instance of \texttt
 int main() {
   hid_t fapl_id = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_libver_bounds(fapl_id, H5F_LIBVER_V18, H5F_LIBVER_LATEST);
-  hid_t file_id = 
+  hid_t file_id =
     H5Fcreate("attrib.3.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl_id);
   hid_t scalar = H5Screate(H5S_SCALAR);
   /* One element is 4*2*512*512 = ~4194K bytes (with 4-byte integers)
@@ -372,13 +372,13 @@ int main() {
 \end{listing}
 
 
-\subsection{Attribute storage layouts} 
+\subsection{Attribute storage layouts}
 
-\paragraph{Overview} There are two primary ways that attributes may be stored - 'compact' storage and 'dense' storage. Compact attributes are small and few in number, and are stored in the header of their parent object. Dense attributes are large or many in number, and are stored in the file's global fractal heap. There is a technique that could be considered a third metadata storage method: Using attributes with reference datatypes to point at metadata stored in other objects. 
+\paragraph{Overview} There are two primary ways that attributes may be stored - 'compact' storage and 'dense' storage. Compact attributes are small and few in number, and are stored in the header of their parent object. Dense attributes are large or many in number, and are stored in the file's global fractal heap. There is a technique that could be considered a third metadata storage method: Using attributes with reference datatypes to point at metadata stored in other objects.
 
-\paragraph{Compact Storage} When attributes are in compact storage, they are stored as attribute messages in the object header of their parent object. An attribute is stored compactly if it is below 64KiB in size and the parent object's total number of attributes is below its max compact storage threshold defined by \texttt{H5Pset\_attr\_phase\_change()}.
+\paragraph{Compact Storage} When attributes are in compact storage, they are stored as attribute messages in the object header of their parent object. An attribute is stored compactly if it is below 64KiB in size and the parent object's total number of attributes is below its max compact storage threshold defined by \func{H5Pset_attr_phase_change}.
 
-Figure~\ref{fig:tour-3-uml-attr-create-compact} is a diagram of the library's internal process to create an attribute in compact storage with the native VOL connector. First, \texttt{H5O\_\_attr\_create()} uses \texttt{H5O\_pin()} to 'pin' the object header, preventing it from being flushed from the cache to storage until it is unpinned at the end of the operation. Once it is determined that the new attribute should be compact, \texttt{H5O\_\_msg\_append\_real()} handles creating the new attribute message and inserting it into the object header. This is done in two steps: First, \texttt{H5O\_\_msg\_alloc()} creates a new message in the header, and returns its location within the header. Then, \texttt{H5O\_\_copy\_mesg()} uses the copy callback of the message type to populate the newly created message. In this case, the new message is an attribute message providing the copy callback \texttt{H5O\_\_attr\_copy()}, a wrapper around the library's function for copying attributes, \texttt{H5A\_\_copy()}. The generic attribute copy function may be used here because attribute messages contain copies of the native \texttt{H5A\_t} object.
+Figure~\ref{fig:tour-3-uml-attr-create-compact} is a diagram of the library's internal process to create an attribute in compact storage with the native VOL connector. First, \func{H5O__attr_create} uses \func{H5O_pin} to 'pin' the object header, preventing it from being flushed from the cache to storage until it is unpinned at the end of the operation. Once it is determined that the new attribute should be compact, \func{H5O__msg_append_real} handles creating the new attribute message and inserting it into the object header. This is done in two steps: First, \func{H5O__msg_alloc} creates a new message in the header, and returns its location within the header. Then, \func{H5O__copy_mesg} uses the copy callback of the message type to populate the newly created message. In this case, the new message is an attribute message providing the copy callback \func{H5O__attr_copy}, a wrapper around the library's function for copying attributes, \texttt{H5A\_\_copy()}. The generic attribute copy function may be used here because attribute messages contain copies of the native \texttt{H5A\_t} object.
 
 \begin{comment}
 http://www.plantuml.com/plantuml/
@@ -408,7 +408,7 @@ hnote over H5O #FFAAAA: Object header is unpinned
     \label{fig:tour-3-uml-attr-create-compact}
 \end{figure}
 
-Figure~\ref{fig:tour-3-uml-attr-remove-compact} is a diagram of the library's internal process to remove a compact attribute. Once again, the object header is pinned to prevent it from being flushed during an operation. The attribute messages in the object header are iterated over in \texttt{H5O\_\_mesg\_iterate\_real()}, and the callback \texttt{H5O\_\_attr\_remove\_cb()} is executed on each. If the attribute message matches the name of the attribute to be deleted, then the deletion process is performed by \texttt{H5O\_\_release\_mesg()}. The removal of the object header message takes place in two parts: first, \texttt{H5O\_\_delete\_msg()} is used to invoke the attribute message's delete callback, \texttt{H5O\_\_attr\_delete()}, which deletes header messages that were referred to by this attribute - specifically, dataspace and datatype messages. After that, \texttt{H5O\_\_msg\_free\_mesg()} invokes the attribute message's 'free' callback, to free the native information stored in the attribute message - the \texttt{H5A\_t} structure and its associated memory.
+Figure~\ref{fig:tour-3-uml-attr-remove-compact} is a diagram of the library's internal process to remove a compact attribute. Once again, the object header is pinned to prevent it from being flushed during an operation. The attribute messages in the object header are iterated over in \func{H5O__mesg_iterate_real}, and the callback \func{H5O__attr_remove_cb} is executed on each. If the attribute message matches the name of the attribute to be deleted, then the deletion process is performed by \func{H5O__release_mesg}. The removal of the object header message takes place in two parts: first, \func{H5O__delete_msg} is used to invoke the attribute message's delete callback, \func{H5O__attr_delete}, which deletes header messages that were referred to by this attribute - specifically, dataspace and datatype messages. After that, \func{H5O__msg_free_mesg} invokes the attribute message's 'free' callback, to free the native information stored in the attribute message - the \texttt{H5A\_t} structure and its associated memory.
 
 \begin{comment}
 http://www.plantuml.com/plantuml/
@@ -417,7 +417,7 @@ participant H5A
 participant H5O
 
 rnote over H5A: H5Adelete
-H5A -> H5O: (...)           
+H5A -> H5O: (...)
 rnote over H5O: H5O__attr_remove
 
 hnote over H5O #FFAAAA: Object header is pinned
@@ -442,7 +442,7 @@ hnote over H5O #FFAAAA: Object header is unpinned
     \label{fig:tour-3-uml-attr-remove-compact}
 \end{figure}
 
-Compact attributes have some drawbacks - performance suffers when objects have many compact attributes and they are strictly limited in size to fit within the object header.  Both of these limitations are circumvented by dense storage. 
+Compact attributes have some drawbacks - performance suffers when objects have many compact attributes and they are strictly limited in size to fit within the object header.  Both of these limitations are circumvented by dense storage.
 
 \paragraph{Dense Storage} When an attribute is in dense storage, the object header contains a pointer to the location of the attribute's data on disk rather than containing the attribute's data directly.
 
@@ -474,7 +474,7 @@ end
 
 rnote over H5A: H5A__dense_insert
 
-alt If attribute message is shared 
+alt If attribute message is shared
 rnote over H5A: Copy pre-existing heap ID
 else Attribute message is not shared
 
@@ -526,12 +526,12 @@ alt If attribute is shared
 H5A -> H5SM:
 rnote over H5SM: H5SM_delete
 
-else If attribute is not shared 
+else If attribute is not shared
 H5A -> H5O: Delete dtype/dataspace
 rnote over H5O: H5O__attr_delete
 H5A -> H5HF:
-rnote over H5HF: H5HF_remove 
-end 
+rnote over H5HF: H5HF_remove
+end
 
 hnote over H5O #FFAAAA: Object header is unpinned
 @enduml
@@ -544,17 +544,17 @@ hnote over H5O #FFAAAA: Object header is unpinned
     \label{fig:tour-3-uml-attr-remove-dense}
 \end{figure}
 
-There are two circumstances under which a new attribute is placed into dense storage. The first is that the number of attributes on the parent object exceeds the maximum number of compact attributes on the object. This threshold may be specified for each object using \texttt{H5P\_set\_attr\_phase\_change()}. The second is that the size of the attribute exceeds 64k bytes, and it would not fit into compact storage. All pre-existing attributes are moved to dense storage whenever a new attribute is placed into dense storage. 
+There are two circumstances under which a new attribute is placed into dense storage. The first is that the number of attributes on the parent object exceeds the maximum number of compact attributes on the object. This threshold may be specified for each object using \func{H5P_set_attr_phase_change}. The second is that the size of the attribute exceeds 64k bytes, and it would not fit into compact storage. All pre-existing attributes are moved to dense storage whenever a new attribute is placed into dense storage.
 
-Figure~\ref{fig:tour-3-uml-attr-create-dense} shows the library's internal process to create an attribute in dense storage. The object header is still pinned, even though the new attribute is not to be stored in the object header. This is because the attribute creation may have side effects that require modifying the object header. If this file does not yet have a fractal heap for dense attribute storage, one is created with \texttt{H5A\_\_dense\_create()}. This step also involves the creation of a B-tree to map dense attribute names to attribute information and optionally creating a B-tree to make the attribute information available by creation order. Once the dense attribute storage structures are confirmed, the attribute's information is stored densely by \texttt{H5A\_\_dense\_insert()}. This involves using the attribute message's encode callback to serialize the attribute, and this serialized attribute information is inserted into the fractal heap by \texttt{H5HF\_insert()}. If the attribute is shared, then this attribute points to the information of an attribute that already exists in the fractal heap. In this case, the insertion into the fractal heap is skipped, and the heap ID of the existing attribute in the fractal heap is copied. The heap information of the new attribute (or preexisting shared attribute) is stored in the name-index B-tree, to be accessed later by the hash of the attribute name. Lastly, if the creation order is tracked, the heap information is also inserted into the creation-order B-tree, to be accessed later by link creation order.
+Figure~\ref{fig:tour-3-uml-attr-create-dense} shows the library's internal process to create an attribute in dense storage. The object header is still pinned, even though the new attribute is not to be stored in the object header. This is because the attribute creation may have side effects that require modifying the object header. If this file does not yet have a fractal heap for dense attribute storage, one is created with \func{H5A__dense_create}. This step also involves the creation of a B-tree to map dense attribute names to attribute information and optionally creating a B-tree to make the attribute information available by creation order. Once the dense attribute storage structures are confirmed, the attribute's information is stored densely by \func{H5A__dense_insert}. This involves using the attribute message's encode callback to serialize the attribute, and this serialized attribute information is inserted into the fractal heap by \func{H5HF_insert}. If the attribute is shared, then this attribute points to the information of an attribute that already exists in the fractal heap. In this case, the insertion into the fractal heap is skipped, and the heap ID of the existing attribute in the fractal heap is copied. The heap information of the new attribute (or preexisting shared attribute) is stored in the name-index B-tree, to be accessed later by the hash of the attribute name. Lastly, if the creation order is tracked, the heap information is also inserted into the creation-order B-tree, to be accessed later by link creation order.
 
 Figure~\ref{fig:tour-3-uml-attr-remove-dense} shows the library's internal process to remove an attribute from dense storage. After \func{H5O__attr_remove} determines the target attribute is in dense storage, \func{H5A__dense_remove} performs the removal. \func{H5B2_remove} searches the name-index B-tree and removes the information for the dense link. If creation order is tracked, the same operation is performed on the creation order B-tree. If the dense attribute is shared between objects, the 'deletion' is handled by using \func{H5SM_delete} to decrease the reference count of the shared attribute message. Otherwise, the dense attribute's referenced information (dataspace/datatype messages) is deleted by \func{H5O__attr_delete}, and it is removed from the dense attribute fractal heap.
 
-When an attribute is removed from storage, the remaining attributes may be moved back into compact storage. If two conditions are met, an attribute will be moved back to compact storage. First, the total number of remaining attributes must be below the minimum number of dense attributes on the object, another threshold set by \texttt{H5P\_set\_attr\_phase\_change()}. Second, the attribute must be under 64k bytes in size. It is possible for the removal of an attribute to cause some, but not all, of the remaining attributes to be moved to compact storage due to some being too large to store compactly. 
+When an attribute is removed from storage, the remaining attributes may be moved back into compact storage. If two conditions are met, an attribute will be moved back to compact storage. First, the total number of remaining attributes must be below the minimum number of dense attributes on the object, another threshold set by \func{H5P_set_attr_phase_change}. Second, the attribute must be under 64k bytes in size. It is possible for the removal of an attribute to cause some, but not all, of the remaining attributes to be moved to compact storage due to some being too large to store compactly.
 
-\paragraph{Attribute Storage and File Format Versions}  Note that because it affects how the HDF5 file is stored on disk, using dense attribute storage requires allowing the library to use a 1.8+ version of the file format (i.e. using \texttt{H5Pset\_libver\_bounds()} with a low version $\geq$ 1.8). With a pre-1.8 compatible file format version, attribute storage will always be compact, and attempts to create attributes greater than 64KiB in size will fail. Pre-1.8 compatible large metadata storage can be accomplished by storing metadata as datasets.
+\paragraph{Attribute Storage and File Format Versions}  Note that because it affects how the HDF5 file is stored on disk, using dense attribute storage requires allowing the library to use a 1.8+ version of the file format (i.e. using \func{H5Pset_libver_bounds} with a low version $\geq$ 1.8). With a pre-1.8 compatible file format version, attribute storage will always be compact, and attempts to create attributes greater than 64KiB in size will fail. Pre-1.8 compatible large metadata storage can be accomplished by storing metadata as datasets.
 
-\subsection{Summary} 
+\subsection{Summary}
 
 Attributes provide a flexible way to store metadata on an HDF5 object with the same CRUD interface as datasets. By default, attributes are stored compactly in the object header with other object metadata. The library takes advantage of the properties of B-trees and fractal heaps for large attributes or large amounts of attributes. If backward compatibility or compressibility is required for metadata, it may be stored in datasets and accessed from other objects through references.
 

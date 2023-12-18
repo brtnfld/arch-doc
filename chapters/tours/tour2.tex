@@ -28,7 +28,7 @@ We first describe an HDF5 file’s runtime life cycle before covering a few fine
 
 \subsection{Life cycle}
 
-In this section, we describe the internals of an HDF5 file's life cycle, including VOL connector and VFD selection and handling, by reviewing the \texttt{H5Fcreate(), H5Fopen(),} and \texttt{H5Fclose()} stacks. At the end of this section, the reader should have enough information to answer the following questions:
+In this section, we describe the internals of an HDF5 file's life cycle, including VOL connector and VFD selection and handling, by reviewing the \func{H5Fcreate, H5Fopen,} and \func{H5Fclose} stacks. At the end of this section, the reader should have enough information to answer the following questions:
 
 \begin{itemize}
     \item How do HDF5 library API calls get ``routed" through the VOL layer?
@@ -58,7 +58,7 @@ int main() {
 \end{minted}
 \end{listing}
 
-We create an ``empty" HDF5 file. Of course, such a minimal HDF5 file must contain a root group! Finally, we print its in-storage size. (As we will see later, the call to \texttt{H5Fflush()} is necessary to get an accurate size.)
+We create an ``empty" HDF5 file. Of course, such a minimal HDF5 file must contain a root group! Finally, we print its in-storage size. (As we will see later, the call to \func{H5Fflush} is necessary to get an accurate size.)
 
 \paragraph{Goals.} The main goals of the HDF5 file creation/open/close life cycle are:
 \begin{itemize}
@@ -68,19 +68,19 @@ We create an ``empty" HDF5 file. Of course, such a minimal HDF5 file must contai
     \item Free all resources associated with the file upon closure of the last handle.
 \end{itemize}
 
-\paragraph{Control flow.} As we saw in Section~\ref{chap:hdf5-lib}, any API call, in this case, \texttt{H5Fcreate()}, will trigger library initialization, which includes the registration of the native VOL as the default VOL connector and the POSIX VFD (sec2) as the default file driver. 
+\paragraph{Control flow.} As we saw in Section~\ref{chap:hdf5-lib}, any API call, in this case, \func{H5Fcreate}, will trigger library initialization, which includes the registration of the native VOL as the default VOL connector and the POSIX VFD (sec2) as the default file driver.
 
-The call sequence for each API routine used in Listing~\ref{lst:file-101} may be found in Figures: ~\ref{fig:tour2-file-create} (\texttt{H5Fcreate()}), \ref{fig:tour2-file-flush} (\func{H5Fflush}), \ref{fig:tour2-file-get-filesize} (\func{H5Fget_filesize}), and ~\ref{fig:tour2-file-close} (\func{H5Fclose}). For modules whose API functions are routed through the VOL layer, we have adopted the notion of top and bottom portions, e.g., \texttt{H5F Top} and \texttt{H5F Bot.} Since the HDF5 library modules predate the introduction of the VOL layer, the code is not neatly separated into VOL handling/native VOL code portions. We refer to a module's VOL handling code portions as the module's `top' portion and the native VOL portion as the module's `bottom.'
+The call sequence for each API routine used in Listing~\ref{lst:file-101} may be found in Figures: ~\ref{fig:tour2-file-create} (\func{H5Fcreate}), \ref{fig:tour2-file-flush} (\func{H5Fflush}), \ref{fig:tour2-file-get-filesize} (\func{H5Fget_filesize}), and ~\ref{fig:tour2-file-close} (\func{H5Fclose}). For modules whose API functions are routed through the VOL layer, we have adopted the notion of top and bottom portions, e.g., \texttt{H5F Top} and \texttt{H5F Bot.} Since the HDF5 library modules predate the introduction of the VOL layer, the code is not neatly separated into VOL handling/native VOL code portions. We refer to a module's VOL handling code portions as the module's `top' portion and the native VOL portion as the module's `bottom.'
 
-\func{H5Fcreate} enters the VOL layer at \func{H5VL_file_create} via \texttt{H5F\_\_create\_api\_common()}. This routine handles sanity checking and calling the internal VOL layer routine, \texttt{H5VL\_file\_create()}. The native VOL connector is selected, and its file creation callback, \texttt{H5VL\_\_native\_file\_create()}, is invoked. The open routine from the file module, \texttt{H5F\_open()}, does all the heavy lifting in terms of allocation and initialization of various in-memory structures (see the section on data flow), creates a metadata cache for the file under construction (\texttt{H5AC\_create()}), and culminates in file superblock and root group creation.
+\func{H5Fcreate} enters the VOL layer at \func{H5VL_file_create} via \func{H5F__create_api_common}. This routine handles sanity checking and calling the internal VOL layer routine, \func{H5VL_file_create}. The native VOL connector is selected, and its file creation callback, \func{H5VL__native_file_create}, is invoked. The open routine from the file module, \func{H5F_open}, does all the heavy lifting in terms of allocation and initialization of various in-memory structures (see the section on data flow), creates a metadata cache for the file under construction (\func{H5AC_create}), and culminates in file superblock and root group creation.
 
-On the following line, \texttt{H5Fflush()} is routed through the VOL layer via \texttt{H5F\_\_flush\_api\_common()}, which invokes the \texttt{H5VL\_file\_specific()} callback with operation type \texttt{H5VL\_FILE\_FLUSH}. The flush operation is handled by the native VOL's \texttt{H5VL\_\_native\_file\_specific()}.
+On the following line, \func{H5Fflush} is routed through the VOL layer via \func{H5F__flush_api_common}, which invokes the \func{H5VL_file_specific} callback with operation type \texttt{H5VL\_FILE\_FLUSH}. The flush operation is handled by the native VOL's \texttt{H5VL\_\_native\_file\_specific()}.
 
-Similarly, the call to \texttt{H5Fget\_filesize()} is routed through the VOL layer's \texttt{H5VL\_file\_optional()} callback with the operation type \texttt{H5VL\_NATIVE\_FILE\_GET\_SIZE}, eventually reaching the native VOL's implementation of the get filesize operation within \texttt{H5VL\_\_native\_file\_optional()}. This invokes the native VOL's internal \texttt{H5F\_\_get\_max\_eof\_eoa()}, which invokes the VFL's \texttt{H5FD\_get\_eo[a,f]()} and adds them to the file's base address obtained from \texttt{H5FD\_get\_base\_addr()}.
+Similarly, the call to \func{H5Fget_filesize} is routed through the VOL layer's \func{H5VL_file_optional} callback with the operation type \texttt{H5VL\_NATIVE\_FILE\_GET\_SIZE}, eventually reaching the native VOL's implementation of the get filesize operation within \texttt{H5VL\_\_native\_file\_optional()}. This invokes the native VOL's internal \texttt{H5F\_\_get\_max\_eof\_eoa()}, which invokes the VFL's \texttt{H5FD\_get\_eo[a,f]()} and adds them to the file's base address obtained from \texttt{H5FD\_get\_base\_addr()}.
 
-\texttt{H5Fclose()} proceeds to decrement the file ID's reference count via \texttt{H5I\_dec\_app\_ref()}. If the reference count has reached 1, which it has in this example, this triggers the invocation of the free function for the particular identifier type, a file ID (\texttt{H5I\_FILE}), in this case. The free function in this case is \texttt{H5F\_\_close\_cb()} via which we re-enter the VOL through \texttt{H5VL\_file\_close()}, which in turn calls the native VOL's \texttt{H5VL\_\_native\_file\_close()}. This triggers the release of in-memory file resources, including flushing and destroying the file-specific metadata cache, via \texttt{H5F\_\_dest()}.
+\func{H5Fclose} proceeds to decrement the file ID's reference count via \func{H5I_dec_app_ref}. If the reference count has reached 1, which it has in this example, this triggers the invocation of the free function for the particular identifier type, a file ID (\texttt{H5I\_FILE}), in this case. The free function in this case is \texttt{H5F\_\_close\_cb()} via which we re-enter the VOL through \texttt{H5VL\_file\_close()}, which in turn calls the native VOL's \texttt{H5VL\_\_native\_file\_close()}. This triggers the release of in-memory file resources, including flushing and destroying the file-specific metadata cache, via \texttt{H5F\_\_dest()}.
 
-\begin{comment} 
+\begin{comment}
 http://www.plantuml.com/plantuml/uml/
 @startuml
 
@@ -240,7 +240,7 @@ native -> H5Fb: H5F__dest
 
 Before looking at variants of this control flow, we look at the data flow and provide the ``Cliff notes" for the VOL and VFL layers. A detailed architectural overview can be found in Section~\ref{ref:vol}.
 
-\paragraph{Data flow.} Every time \texttt{H5F[create,open]()} is called, a structure of type \texttt{H5F\_t} (see Listing~\ref{lst:file-top}) is allocated.
+\paragraph{Data flow.} Every time \func{H5F[create,open]} is called, a structure of type \texttt{H5F\_t} (see Listing~\ref{lst:file-top}) is allocated.
 
 \begin{listing}
 \centering
@@ -273,7 +273,7 @@ Since HDF5 files can be opened multiple times with different \texttt{hid\_t} han
      \item Various status information.
  \end{itemize}
 We strongly encourage the reader to review the well-documented \texttt{H5F\_shared\_t} definition!
- 
+
 Notice that most fields in \texttt{H5F\_shared\_t} show the file system heritage and represent information related to persisting HDF5 files in a file system according to the file format specification~\cite{ffmt}. For example, the \texttt{sblock} field of \texttt{H5F\_shared\_t} (see Listing~\ref{lst:file-sblock}) matches almost verbatim the file format specification.
 
 \begin{listing}
@@ -310,7 +310,7 @@ It is hard to overstate the central role of the metadata cache's role in the HDF
 
 \paragraph{Goals} The purpose of the Virtual Object Layer (VOL) is to decouple the HDF5 library's API and object abstractions from a particular storage implementation while requiring minimal change in how the API is used. It allows for independent, potentially user-defined VOL connectors to handle virtual object operations. A common use case for VOL connectors is to change how HDF5 files are stored, mapping an HDF5 file in memory to something other than a POSIX file in storage - for example, a collection of objects in an AWS S3 bucket. The VOL layer's capabilities are more general than just changing the implementation of storage - a connector can perform arbitrary operations (such as logging, caching, or mirroring) whenever a routine that is part of the VOL API is used.
 
-\paragraph{VOL Architecture}  Figure~\ref{fig:vol-arch} shows how the VOL fits into the library's structure. Operations that deal with storage or virtual objects are part of the VOL API, which means that calls pass through one or more VOL connectors before reaching storage. There are two types of VOL connectors: pass-through connectors, which pass control flow to another connector after performing some operation, and terminal connectors, which do not pass on to another connector and are generally used to map objects to storage. 
+\paragraph{VOL Architecture}  Figure~\ref{fig:vol-arch} shows how the VOL fits into the library's structure. Operations that deal with storage or virtual objects are part of the VOL API, which means that calls pass through one or more VOL connectors before reaching storage. There are two types of VOL connectors: pass-through connectors, which pass control flow to another connector after performing some operation, and terminal connectors, which do not pass on to another connector and are generally used to map objects to storage.
 
 Library functions which are a part of the VOL API internally call a function of the form \func{H5*__<operation>_api_common}, which routes the call to the VOL layer via \func{H5VL_<operation>}. The VOL layer determines which connector to use by checking the property list that was passed as an argument to the original API call.
 
@@ -320,7 +320,7 @@ VOL connectors other than the native connector are distributed as plugins loaded
 
 \paragraph{Dynamic Loading with Environment Variables} Dynamic loading with environment variables does not require rebuilding or modifying the application. However, it does not allow an application to load multiple VOL connectors.
 
-At runtime, the library checks the environment variable \texttt{HDF5\_VOL\_CONNECTOR} for the name of a VOL connector to load. This name is case-sensitive and is specified manually by each connector - the DAOS VOL connector, for example, expects to be discovered under the name \texttt{daos}. 
+At runtime, the library checks the environment variable \texttt{HDF5\_VOL\_CONNECTOR} for the name of a VOL connector to load. This name is case-sensitive and is specified manually by each connector - the DAOS VOL connector, for example, expects to be discovered under the name \texttt{daos}.
 
 If the VOL connector is not installed to a default system path, then the environment variable \texttt{HDF5\_PLUGIN\_PATH} must be used to specify the absolute path to the connector. Generally, this will be the \texttt{/lib} subdirectory of wherever the connector was installed.
 
@@ -330,7 +330,7 @@ If the VOL connector is successfully loaded through environment variables, the l
 
 Once the connector has been registered and assigned an \texttt{hid\_t} handle, this handle may be provided to \texttt{H5Pset\_vol} to modify a FAPL, telling any VOL layer function that checks this FAPL to use the supplied connector.
 
-\paragraph{Manual Linking} Linking a VOL connector requires modifying the source and build of the target application but provides more flexibility in how the connectors may be used. 
+\paragraph{Manual Linking} Linking a VOL connector requires modifying the source and build of the target application but provides more flexibility in how the connectors may be used.
 
 The requirements to link and use a connector are as follows:
 \begin{itemize}
@@ -339,13 +339,13 @@ The requirements to link and use a connector are as follows:
     \item Potentially invoke any initialization/termination functions of the connector at the start/end of the application
 \end{itemize}
 
-Once these requirements are satisfied, the FAPL is modified using  \texttt{H5Pset\_fapl\_<vol\_name>()} or \texttt{H5Pset\_<vol\_name>()} so that any VOL API calls provided with that FAPL will use the specified connector. Note that the exact function name for this operation will vary by connector in a way that does not adhere to any strict pattern.
+Once these requirements are satisfied, the FAPL is modified using  \func{H5Pset_fapl_<vol_name>} or \func{H5Pset_<vol_name>} so that any VOL API calls provided with that FAPL will use the specified connector. Note that the exact function name for this operation will vary by connector in a way that does not adhere to any strict pattern.
 
 \subsection{Detour: The Virtual File Layer}\label{sec:vfl}
 
 A popular metaphor refers to HDF5 files as ``file systems in a file." The Virtual File Layer (VFL) adds some credibility to this metaphor. This section reviews the HDF5 Virtual File Layer, its requirements and assumptions, and its place in the library.
 
-\paragraph{Overview} The VFL serves a purpose similar to the VOL -- outsourcing the implementation of specific storage-related operations to potentially user-defined Virtual File Drivers (VFDs) while minimizing the changes necessary in user applications. However, the scope of the VFL is narrower: it defines a mapping between the HDF5 address space and file system-like storage. 
+\paragraph{Overview} The VFL serves a purpose similar to the VOL -- outsourcing the implementation of specific storage-related operations to potentially user-defined Virtual File Drivers (VFDs) while minimizing the changes necessary in user applications. However, the scope of the VFL is narrower: it defines a mapping between the HDF5 address space and file system-like storage.
 
 As seen in Figure~\ref{fig:vol-arch}, the Virtual File Layer (VFL) sits at the bottom of the native VOL. It is a native VOL extension interface. If a non-native VOL is used, the VFL will be bypassed entirely. Just as the native VOL is the default VOL connector, the sec2 driver (or 'POSIX VFD') is the default VFD, which uses POSIX functions to perform unbuffered I/O (with respect to the HDF5 library) to a single file. (See Section~\ref{sec:H5PB} for a configuration in which the HDF5 library performs buffering.)
 
@@ -354,14 +354,14 @@ As seen in Figure~\ref{fig:vol-arch}, the Virtual File Layer (VFL) sits at the b
 The process of using a VFD that is not built with the library is similar to the process of using a manually linked VOL connector:
 \begin{itemize}
     \item The VFD must be linked to the application at the application's build time
-    \item The VFD's public headers must be included 
+    \item The VFD's public headers must be included
 \end{itemize}
 
-After meeting the necessary requirements, the VFD can be enabled by modifying the FAPL using either \texttt{H5Pset\_driver\_by\_name()} or \texttt{H5Pset\_driver\_by\_value()}. \texttt{H5Pset\_driver\_by\_name()} requires a case-sensitive name specific to each VFD, and \texttt{H5Pset\_driver\_by\_value()} requires a `driver value,' a unique number assigned to each VFD that is registered with The HDF Group.
+After meeting the necessary requirements, the VFD can be enabled by modifying the FAPL using either \func{H5Pset_driver_by_name} or \func{H5Pset_driver_by_value}. \func{H5Pset_driver_by_name} requires a case-sensitive name specific to each VFD, and \func{H5Pset_driver_by_value} requires a `driver value,' a unique number assigned to each VFD that is registered with The HDF Group.
 
-Alternatively, each VFD should define a function with a name of the form \texttt{H5P\_set\_fapl\_<VFD\_name>()}, which also modifies a FAPL to specify the use of that VFD. Listing~\ref{lst:file-core-vfd} shows a function of this form being used to enable the core VFD, a VFD that manages HDF5 files as contiguous memory buffers and maps I/O operations to memory accesses.
+Alternatively, each VFD should define a function with a name of the form \func{H5P_set_fapl_<VFD_name>}, which also modifies a FAPL to specify the use of that VFD. Listing~\ref{lst:file-core-vfd} shows a function of this form being used to enable the core VFD, a VFD that manages HDF5 files as contiguous memory buffers and maps I/O operations to memory accesses.
 
-\paragraph{VFL Architecture.} Recall from the section on VOL Architecture that the property list for an operation determines which VOL is used. If the native VOL is selected, the property list also contains information about which file driver to use. Continuing the earlier example, the top level \texttt{H5Fopen()} eventually calls the native VOL's \texttt{H5F\_open()}, which invokes the VFL's \texttt{H5FD\_open()}. This VFL function uses the 'open' callback of the active file driver, which for the default sec2 driver is \texttt{H5FD\_\_sec2\_open()}. This driver callback is where the actual work to open a file in memory is performed. 
+\paragraph{VFL Architecture.} Recall from the section on VOL Architecture that the property list for an operation determines which VOL is used. If the native VOL is selected, the property list also contains information about which file driver to use. Continuing the earlier example, the top level \func{H5Fopen} eventually calls the native VOL's \func{H5F_open}, which invokes the VFL's \func{H5FD_open}. This VFL function uses the 'open' callback of the active file driver, which for the default sec2 driver is \func{H5FD__sec2_open}. This driver callback is where the actual work to open a file in memory is performed.
 
 Each file driver provides pointers to its callbacks in an \texttt{H5FD\_class\_t} struct. These callbacks are invoked by handler functions with names of the form \texttt{H5FD\_<operation>()} in the VFL layer. % See section~\ref{ref:vfl} for more information about the VFL.
 

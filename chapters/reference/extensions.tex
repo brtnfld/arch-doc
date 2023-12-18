@@ -26,7 +26,7 @@
 
 % \subsubsection{User-Defined Error Classes}
 
-% It is possible to define custom error classes to handle specific types of errors or exceptions that may occur internally in HDF5. Custom error classes are used when implementing extensions to HDF5, such as VOLs, Filters, and VFDs. Developers can provide detailed error reports for their specific extensions, improving debugging capabilities for both developers and end-users. 
+% It is possible to define custom error classes to handle specific types of errors or exceptions that may occur internally in HDF5. Custom error classes are used when implementing extensions to HDF5, such as VOLs, Filters, and VFDs. Developers can provide detailed error reports for their specific extensions, improving debugging capabilities for both developers and end-users.
 
 % Any more use cases of custom error classes?
 % Example of registering the error stack: H5Eregister_class
@@ -61,9 +61,9 @@ The following features of F2003 and F2008 are commonly used, and their availabil
     \item C pointers are represented by an opaque derived type called \texttt{C\_PTR}, and \texttt{C\_FUNPTR} is used for callback functions.
     \item All Fortran APIs use the \textit{BIND(C, name=\textbf{C API})} convention, where \textit{\textbf{C API}} matches the name of the C API.
 \end{itemize}
-With these new features, most, if not all, of the C wrappers can be eliminated by calling the HDF5 C APIs directly from the Fortran wrappers. 
+With these new features, most, if not all, of the C wrappers can be eliminated by calling the HDF5 C APIs directly from the Fortran wrappers.
 
-Lastly, the Fortran wrappers avoid modifying a user's buffer and try to minimize memory copies and allocations whenever possible. Consequently, when a C application reads data written from a Fortran program, the data appears to be transposed due to the difference in the storage order between C (row-major) and Fortran (column-major). For instance, if Fortran writes a 4x6 two-dimensional dataset to a file, a C program will read it into memory as a 6x4 two-dimensional dataset. It is worth noting that the HDF5 C utilities \textit{h5dump} and \textit{h5ls} display transposed data when data is written from a Fortran program. 
+Lastly, the Fortran wrappers avoid modifying a user's buffer and try to minimize memory copies and allocations whenever possible. Consequently, when a C application reads data written from a Fortran program, the data appears to be transposed due to the difference in the storage order between C (row-major) and Fortran (column-major). For instance, if Fortran writes a 4x6 two-dimensional dataset to a file, a C program will read it into memory as a 6x4 two-dimensional dataset. It is worth noting that the HDF5 C utilities \textit{h5dump} and \textit{h5ls} display transposed data when data is written from a Fortran program.
 
 An overview of the files, file generation, and other Fortran wrapper development practices are updated and detailed in \textit{README.md}, located in \textit{fortran/src}.
 
@@ -98,7 +98,7 @@ Additional supporting Java infrastructure can be found in the following files/di
     I/O pathway between Java and C.
   \item \texttt{java/src/hdf/hdf5lib/HDFNativeData.java} \\
     This file defines Java wrapper functions for methods that support \texttt{HDFArray.java}
-    during the data element conversion process. 
+    during the data element conversion process.
   \item \texttt{java/src/hdf/hdf5lib/callbacks} \\
     This directory contains source files that define Java interfaces, functions, etc., necessary
     for being able to make a call from Java to an HDF5 API that accepts a pointer to a callback

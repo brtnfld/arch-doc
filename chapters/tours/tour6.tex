@@ -51,7 +51,7 @@ We already encountered the metadata cache in tours~\ref{sec:tour2} and~\ref{sec:
   \item Contiguous regions of datasets
   \item Dataset chunks
   \item File pages filled with raw data
-  \end{itemize} \\ 
+  \end{itemize} \\
   \hline
 \end{tabular}
 \end{center}
@@ -60,7 +60,7 @@ We already encountered the metadata cache in tours~\ref{sec:tour2} and~\ref{sec:
 
 \subsection{The mighty metadata cache (MDC)}
 
-To simulate the impact of an improperly configured (or altogether absent) MDC, we perform a set of metadata-intensive operations and arbitrarily ``throttle" the MDC via \texttt{H5Pset\_mdc\_config()} as shown in listing~\ref{lst:no-mdc}. The code creates and then deletes 50,000 subgroups in separate loops and then creates another 25,000 subgroups. Most of the metadata will be local heaps and symbol tables from all these groups. Running the code with the \texttt{throttle} argument curtails the metadata cache size to 1KiB. With the throttled configuration, the code runs more than five times slower than the default configuration. Reviewing the Callgrind profile, this increase is almost proportional to the increase in \texttt{H5C\_\_flush\_single\_entry()} calls from \texttt{H5C\_\_make\_space\_in\_cache()} (429,136 to 1,873,837 with \texttt{throttle}).
+To simulate the impact of an improperly configured (or altogether absent) MDC, we perform a set of metadata-intensive operations and arbitrarily ``throttle" the MDC via \func{H5Pset_mdc_config} as shown in listing~\ref{lst:no-mdc}. The code creates and then deletes 50,000 subgroups in separate loops and then creates another 25,000 subgroups. Most of the metadata will be local heaps and symbol tables from all these groups. Running the code with the \texttt{throttle} argument curtails the metadata cache size to 1KiB. With the throttled configuration, the code runs more than five times slower than the default configuration. Reviewing the Callgrind profile, this increase is almost proportional to the increase in \texttt{H5C\_\_flush\_single\_entry()} calls from \texttt{H5C\_\_make\_space\_in\_cache()} (429,136 to 1,873,837 with \texttt{throttle}).
 
 \begin{listing}
 \centering
@@ -158,7 +158,7 @@ int main(int argc, char** argv)
         H5P_DEFAULT, dcpl, dapl);
     hid_t mspace = H5Screate_simple(1, (hsize_t[]){1}, NULL);
     H5Sselect_elements(mspace, H5S_SELECT_SET, 1, (hsize_t[]){0});
-    
+
     for (int i = 0; i < 100; ++i)
     {
         H5Sselect_elements(fspace, H5S_SELECT_SET, 1,
@@ -166,8 +166,8 @@ int main(int argc, char** argv)
         H5Dwrite(dset, H5T_NATIVE_INT, mspace, fspace, H5P_DEFAULT, &i);
     }
     H5Sclose(mspace);
-    H5Pclose(dapl);     
-    H5Pclose(dcpl);  
+    H5Pclose(dapl);
+    H5Pclose(dcpl);
     H5Dclose(dset);
     H5Sclose(fspace);
     H5Fclose(file);
@@ -182,11 +182,11 @@ In HDF5 library release 1.10.0, a new file space management strategy, \textit{pa
 
 To see the paged aggregation/page buffering combination in action, we have modified listing~\ref{lst:no-ccache} and updated the file creation and access property lists to arrive at listing~\ref{lst:pages}. We have updated the behavior of the \texttt{cache-all} argument to bump the page buffer size from 1MiB to 8MiB. The latter can accommodate all file pages. Again, looking at the differences in the Callgrind profiles, the differences are clear to see. A good measure of the effectiveness of paged aggregation and page buffering is to look at the number of \texttt{H5PB[read,write]()} and \texttt{pwrite()} calls.
 
-\texttt{H5PBwrite()} writes data into the page buffer. If the page exists in the cache, update it; otherwise, read it from the disk, update it, and insert it into the cache.
+\func{H5PBwrite} writes data into the page buffer. If the page exists in the cache, update it; otherwise, read it from the disk, update it, and insert it into the cache.
 
-\texttt{H5PBread()} reads in the data from the page containing it if it exists in the page buffer; otherwise, it reads the page through the VFD.
+\func{H5PBread} reads in the data from the page containing it if it exists in the page buffer; otherwise, it reads the page through the VFD.
 
-The number of \texttt{pwrite()} calls indicates the I/O traffic the OS sees from the application.
+The number of \func{pwrite} calls indicates the I/O traffic the OS sees from the application.
 
 \begin{listing}
 \centering
@@ -218,7 +218,7 @@ int main(int argc, char** argv)
         H5P_DEFAULT, dcpl, dapl);
     hid_t mspace = H5Screate_simple(1, (hsize_t[]){1}, NULL);
     H5Sselect_elements(mspace, H5S_SELECT_SET, 1, (hsize_t[]){0});
-    
+
     for (int i = 0; i < 100; ++i)
     {
         H5Sselect_elements(fspace, H5S_SELECT_SET, 1,
@@ -226,8 +226,8 @@ int main(int argc, char** argv)
         H5Dwrite(dset, H5T_NATIVE_INT, mspace, fspace, H5P_DEFAULT, &i);
     }
     H5Sclose(mspace);
-    H5Pclose(dapl);     
-    H5Pclose(dcpl);  
+    H5Pclose(dapl);
+    H5Pclose(dcpl);
     H5Dclose(dset);
     H5Sclose(fspace);
     H5Fclose(file);
@@ -238,9 +238,9 @@ int main(int argc, char** argv)
 
 The call counts without and with the \texttt{cache-all} argument are shown in parentheses.
 \begin{itemize}
-    \item \texttt{H5PBwrite()} (114 / 18)
-    \item \texttt{H5PBread()} (96 / 0)
-    \item \texttt{pwrite()} (102 / 6)
+    \item \func{H5PBwrite} (114 / 18)
+    \item \func{H5PBread} (96 / 0)
+    \item \func{pwrite} (102 / 6)
 \end{itemize}
 
 The drop in call counts is significant. Again, depending on the problem size, the effectiveness of the OS page cache will intervene, and the actual performance difference between the two scenarios may not be near what the counts suggest.
