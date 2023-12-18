@@ -439,7 +439,7 @@ When using Single Writer Multiple Reader (SWMR), the writer may not make use of 
 
 \end{itemize}
 
-\begin{comment}
+%\begin{comment}
 \subsection{Virtual File Layer (\texttt{H5FD})}\label{ref:vfl}
 
 %|  Name  | TODO | ONGOING | DONE |
@@ -453,78 +453,74 @@ When using Single Writer Multiple Reader (SWMR), the writer may not make use of 
 %| Neil   | x    |         |      |
 %| Scot   | x    |         |      |
 
-\todo[inline]{Owner: Luke -- Priority: Medium -- Effort: S -- Completion: 0\%}
+\todo[inline]{Owner: Luke -- Priority: Medium -- Effort: S -- Completion: 100\%}
 
-The Virtual File Layer (VFL) is an abstraction layer that provides the ability to extend the native VOL to support different I/O backends and storage system types. The VFL provides this extensibility through Virtual File Drivers (VFDs). VFDs intercept the file I/O of the native VOL and convert them into I/O requests for the particular storage backend, such as Amazon S3. VFDs are only compatible with the native VOL and are intended to be used only in serial HDF5 -- not parallel HDF5. There are numerous examples of VFDs in the core HDF library:
+The Virtual File Layer (VFL) is an abstraction layer that provides the ability to extend the native VOL to support different I/O backends and storage system types. The VFL provides this extensibility through Virtual File Drivers (VFDs). VFDs intercept the file I/O of the native VOL and convert them into I/O requests for the particular storage backend, such as Amazon S3. VFDs are only compatible with the native VOL. There are numerous examples of VFDs in the core HDF library:
 \begin{enumerate}
     \item \textbf{Sec2}: This is the default VFD used by HDF5. It performs POSIX I/O to the underlying filesystem.
     \item \textbf{Core}: Perform I/O directly to main memory.
     \item \textbf{S3}: Perform I/O to Amazon S3 -- an object store.
+    \item \textbf{Split}: The split VFD forwards I/O to two files - one for read + write and one that is write-only. Two versions of the same file are maintained.
 \end{enumerate}
 
-There are two general catgerories of VFD:
+There are two general categories of VFD:
 \begin{enumerate}
-    \item \textbf{Pass-through VFDs}: Forward data to another VFD. Examples include the family and split VFDs. 
-    \item \textbf{Terminal VFDs}: The final VFD connector in a list of VFDs. Intended to be used for low-level data storage. Examples include the Sec2, Core, and S3 VFDs.
+    \item \textbf{Pass-through VFD}: Forwards operations to a future VFD. One example is the split VFD.
+    \item \textbf{Terminal VFD}: The last VFD in a list of VFDs. Examples include the Sec2, Core, and S3 VFDs.
 \end{enumerate}
 
-VFD authors should be aware of the concurrency model of HDF5 when developing their VOLs:
+VFD authors should be aware of the concurrency model of HDF5 when developing their VFDs:
 \begin{enumerate}
-    \item \textbf{Multi-Process Concurrency}: VFDs are not compatible with parallel HDF5. If it is intdended for the VFD to potentially modify the same file across processes, the concurrency will have to be handled by the VFD developer explicitly using methods such as file locking.
-    \item \textbf{Multi-Thread Concurrency}: VFDs will never be called from multiple threads at the same time in HDF5. This is because HDF5 uses a global lock when performing I/O. All VFDs in the list of VOLs will be executed in sequence before the lock is released.
+    \item \textbf{Multi-Process Concurrency}: VFDs are not compatible with parallel HDF5. If it is intended for the VFD to potentially modify the same file across processes, the concurrency will have to be handled by the VFD developer explicitly using methods such as file locking.
+    \item \textbf{Multi-Thread Concurrency}: VFDs will never be called from multiple threads at the same time in HDF5. This is because HDF5 uses a global lock when performing I/O.
 \end{enumerate}
 
 \subsubsection{The VFD Class Structure}
 
-VFDs are defined using the VFD class struct (\texttt{H5FD\_class\_t}), which contains function pointers to various HDF5 I/O operation overrides and identifying information. VFDs are intended to follow the singleton design pattern. Typically the VFD class is declared as a static global variable in the VFD source file so that VFD functions can access the variable easily without explicitly passing it in. VFDs can choose to leave most functions unimplemented by setting them to NULL.
+VFDs are defined using the VFD class struct (\texttt{H5FD\_class\_t}), which contains function pointers to various HDF5 I/O operation overrides and identifying information. VFDs are intended to follow the singleton design pattern. Typically the VFD class is declared as a static global variable in the VFD source file so that VFD functions can access the variable easily without explicitly passing it in. VFDs can choose to leave certain functions unimplemented by setting them to NULL.
 
-The VFD class has a few parameters regarding the identification and versioning of the VOL.
+The VFD class has a few parameters regarding the identification and versioning of the VFD.
 \begin{enumerate}
-    \item \textbf{VFD ID}: A globally unique integer constant of type \texttt{H5FD\_class\_value\_t} that can be used to locate the VFD.
-    \item \textbf{VFD name}: A globally unique semantic string that can be used to locate the VFD. While not technically erronous, spaces in the VFD name should be avoided since it increases the complexity of VFD initialization through environment variables.
-    \item \textbf{VFD connector version}: An integer indicating the version of this VFD. This is mainly intended to help users ensure they are linking against the correct version of the VFD code.
-    \item \textbf{VFD class struct version}: The version of the class struct being implemented. Different HDF5 versions have different class struct definitions. This allows HDF5 to determine whether the VOL was designed for the particular HDF5 version a user application is compiled against.
+    \item \textbf{VFD ID}: A globally unique integer constant of type \texttt{H5FD\_class\_value\_t} that can be used to locate the VFD. This value should be between 512 and 65535 for VFDs not officially apart of the HDF5 library.
+    \item \textbf{VFD name}: A globally unique semantic string that can be used to locate the VFD. While not technically erronous, spaces in the VFD name should be avoided since it increases the complexity of VFD initialization through environment variables..
+    \item \textbf{VFD class struct version}: The version of the class struct being implemented. Different HDF5 versions have different class struct definitions. This allows HDF5 to determine whether the VFD was designed for the particular HDF5 version a user application is compiled against. This should be set to \texttt{H5FD\_CLASS\_VERSION}.
 \end{enumerate}
 
-VFDs provide two functions for initializing and finalizing VOL classes.
+VFDs do not provide a specific function for initializing the VFD -- although a specific \texttt{terminate} method is provided for finalization. In addition, there are several functions for intercepting I/O: \texttt{open()}, \texttt{close()}, \texttt{read()}, \texttt{write()}, \texttt{read\_vector()}, \texttt{write\_vector()}, \texttt{read\_selection()}, \texttt{write\_selection()}, \texttt{flush()}, \texttt{truncate()}, \texttt{lock()}, \texttt{unlock()}, \texttt{del()}. Note that \texttt{lock()} and \texttt{unlock()} refer to file locking (e.g., \texttt{flock()} and \texttt{funlock()}) -- not multithreading. It is mandatory that \texttt{open()}, \texttt{close()}, \texttt{get\_eoa()}, \texttt{set\_eoa()}, \texttt{get\_eof()}, \texttt{read()}, and \texttt{write()} are implemented.
+
+There are several functions and variables for querying and copying file access (fapl), data transfer (dxpl) property lists, and VFD properties including \texttt{(fapl/dxpl)\_size}, \texttt{(fapl/dxpl)\_get()}, \texttt{(fapl/dxpl)\_copy()}, and \texttt{(fapl/dxpl)_free()}, \texttt{ctl}, and \texttt{query}.
+
+% What is fl_map. I understand that "fl" stands for free list, but what is being allocated / is it worth detailing more?
+
+\subsubsection{VFD Registration}
+
+It is mandatory for every VFD to implement and register the \texttt{H5VL\_class\_t} struct. This struct outlines the set of methods the VFD overrides. In C code, there are three ways to register the \texttt{H5VL\_class\_t} struct: 
 \begin{enumerate}
-    \item \textbf{initialize}: a method called to initialize the VOL connector
-    \item \textbf{terminate}: a method called to free data allocated by VOL connector
+    \item \texttt{H5FDregister()}: register the class struct pointer directly
+    \item \texttt{H5FD\_register\_driver\_by\_name()}: locate and register the VFD by its name using the plugins interface (H5PL)
+    \item \texttt{H5FD\_register\_driver\_by\_id()}: locate and register the VFD by its ID using the plugins interface (H5PL)
 \end{enumerate}
+These functions perform various sanity checks, including verifying that the minimum functionality of the VFD is implemented. VFD developers oftentimes implement a public wrapper function that internally calls \texttt{H5FDregister()} to avoid requiring users to pass the class struct pointer directly.
 
-There are 
+Parameters can be passed to the VFD after registration using property lists (H5P). The parameter string does not have any requirements on structure. There can be spaces, non-unicode characters, or binary information.  There are two functions provided for passing this string to the VFD:
 \begin{enumerate}
-    \item \texttt{H5VL\_info\_class\_t}: 
+    \item \texttt{H5Pset\_driver\_by\_name()}: Pass a parameter string to a property list and index by VFD name
+    \item \texttt{H5Pset\_driver\_by\_id()}: Pass a parameter string to a property list and index by VFD ID
 \end{enumerate}
+\texttt{H5Pget\_driver\_config\_str()} is used internally by VFD developers for accessing this configuration information.
 
-There are 4 general classes of function that can be overridden relating to infrastructure/services:
+HDF5 can also transparently locate and register a VFD through the H5PL with the following environment variables:
 \begin{enumerate}
-    \item \texttt{H5VL\_introspect\_class\_t}: Container/connector introspection class callbacks.
-    \item \texttt{H5VL\_request\_class\_t}: Asynchronous request class callbacks.
-    \item \texttt{H5VL\_blob\_class\_t}: Blob class callbacks.
-    \item \texttt{H5VL\_token\_class\_t}: VOL connector object token class callbacks.
+    \item \texttt{HDF5\_PLUGIN\_PATH}: tells HDF5 the directories to search for VFD libraries
+    \item \texttt{HDF5\_DRIVER}: holds a string containing the name of a particular VFD to load
+    \item \texttt{HDF5\_DRIVER\_CONFIG}: (optional) holds a string containing the parameterization of a particular VFD
 \end{enumerate}
-
-\subsubsection{VOL Registration}
-
-It is mandatory for every VOL to implement and register the \texttt{H5VL\_class\_t} struct. This struct outlines the set of methods the VOL overrides. There are various ways to register the \texttt{H5VL\_class\_t} struct. In the library, there are three API routines for VOL registration:
-\begin{enumerate}
-    \item \texttt{H5VLregister\_connector()}: takes as input the class struct pointer directly and registers it with HDF5
-    \item \texttt{H5VLregister\_connector\_by\_name()}: use the plugins interface (H5PL) to locate the VOL by the VOL name
-    \item \texttt{H5VLregister\_connector\_by\_value()}: use the plugins interface (H5PL) to locate the VOL by the connector ID
-\end{enumerate}
-During registration, the \texttt{initialize} function defined in the VOL class struct will be called if it is non-NULL. This function does not take any parameters -- except an empty property list. It is also only called once throughout the entire lifetime of the VOL and should be used to initialize any library or service required to be initialized exactly once. To pass variables to \texttt{initialize}, VOL authors should define custom environment variables and document them.
-
-In addition, parameters can be passed to the VOL after registration using \texttt{H5VLconnector\_str\_to\_info()}, which takes as input a string that is internally parsed by the VOL's custom \texttt{from\_str} function (defined in \texttt{H5VL\_info\_class\_t}). There is no required structure to this string, although it is best practice to avoid spaces and use `:'or `;' as separators for tokens. More complex parameters should be placed in custom environment variables instead. In \texttt{from\_str}, the parameter string will be parsed into a VOL-specific info struct, which can be accessed, copied, and queried using methods in \texttt{H5VL\_info\_class\_t}. An example of a parameter string to initialize a theoretical VOL named PFS that stores HDF5 data in a file on a PFS could be `username:/path/to/ssh/key:/path/to/file.txt'.
-
-HDF5 can also transparently locate and register a VOL through the \texttt{HDF5\_PLUGIN\_PATH} and \\ \texttt{HDF5\_VOL\_CONNECTOR} environment variables. \texttt{HDF5\_PLUGIN\_PATH} tells HDF5 the directories to search for VOL libraries and \texttt{HDF5\_VOL\_CONNECTOR} holds a string containing the name and parameterization of a particular VOL to load. H5PL will split this string by spaces to determine the (VOL name, parameter) pair. Only a single VOL and its parameters can be specified using the environment variable. If the parameter string contains spaces, anything after the second space will be deleted. An example of \texttt{HDF5\_VOL\_CONNECTOR} for initializing the example PFS VOL could be `PFS username:/path/to/ssh/key:/path/to/file.txt', where PFS is the VOL name defined in the class struct. H5PL then automatically loads and registers the VOL, implicitly calling \texttt{H5VLregister\_connector\_by\_name()} with the VOL name as input and \\ \texttt{H5VLconnector\_str\_to\_info()} with the parameter string as input if it is not empty. \texttt{H5Pset\_vol()} will then also be called to duplicate the info struct using the \texttt{copy} method defined in \texttt{H5VL\_info\_class\_t} and store in a property list tracked internally by HDF5. Generally, the info struct will be either passed directly to most VOL functions or queried from a property list.
-
-To be compatible with H5PL, VOLs must implement the \texttt{H5PLget\_plugin\_type()} and \\ \texttt{H5PLget\_plugin\_info()} methods. HDF5 automatically searches for these methods and requires their signatures to be exactly correct. An example code is shown in Listing~\ref{lst:vol-init}.
+Only a single VFD and its parameters can be specified using the environment variables. If \texttt{HDF5\_DRIVER\_CONFIG} is not empty, H5PL will automatically call \texttt{H5Pset\_driver\_by\_id()} to modify the VFD's property list. To be compatible with H5PL, VFDs must implement the \texttt{H5PLget\_plugin\_type()} and \texttt{H5PLget\_plugin\_info()} methods. HDF5 automatically searches for these methods and requires their signatures to be exactly correct. An example code is shown in Listing~\ref{lst:vfd-init}.
 
 \begin{listing}[!ht]
 \centering
 \caption{VFD plugin discovery code.}
-\label{lst:vol-init}
+\label{lst:vfd-init}
 \begin{minted}[linenos]{C}
 static const H5FD_class_t H5FD_custom_vfd_g = { /** method overrides */ }
 H5PL_type_t H5PLget_plugin_type(void) {
@@ -536,32 +532,29 @@ const void* H5PLget_plugin_info(void) {
 \end{minted}
 \end{listing}
 
-\subsubsection{VOL Organization}
+\subsection{VFD Organization}
 
 \begin{figure}[!ht]
   \centering
-  \includegraphics{images/tour_4_vol_dags.pdf}
-  \caption{Depiction of data flow in VOL DAGs}
-  \label{fig:vol-dag}
+  \includegraphics{images/tour_4_vfd_dags.pdf}
+  \caption{Depiction of data flow in VFD DAGs}
+  \label{fig:vfd-dag}
 \end{figure}
 
-VOLs can be conceptually organized as directed acyclic graphs (DAGs), although there is no specific DAG data structure in HDF5. Two examples of VOL DAGs and how data flows through them are shown in Figure~\ref{fig:vol-dag}. EX1 is a list of VOLs that compress, encrypt, and store the transformed data using a terminal PFS VOL. EX2 is a DAG of VOLs that compresses data and replicates the compressed data to numerous data repositories using terminal VOLs for S3, DAOS, and PFS. To create EX1, the parameter string would have to contain the information needed to register and initialize the compress, encrypt, and PFS VOLs. For example, \texttt{HDF5\_VOL\_CONNECTOR}=`compress zlib;encrypt:aes:/home/user/key.aes;PFS:/home/user/ex1.h5'. This string would be first passed to compress, where the relevant information needed to initialize the compress module will be parsed (zlib). Within the compress VOL, the name of the next VOL to create will be extracted (encrypt) and \texttt{H5VLregister\_connector\_by\_name()} will be called using the remaining parameter string (aes:/home/user/key.aes;PFS:/home/user/ex1.h5). This will repeat recursively until each VOL is registered and defined. There is no specific functionality in HDF5 to initialize multiple VOLs at the same time -- it is the responsibility of a pass-through VOL developer to initialize any future VOLs it may depend on.
+VFDs can be conceptually organized as directed acyclic graphs (DAGs), although there is no specific DAG data structure in HDF5. An example DAG depicting the split VFD data path is shown in Figure~\ref{fig:vfd-dag}. There are two general approaches to handle the initialization of VFD DAGs:
+\begin{enumerate}
+    \item Require users to explicitly call a custom initialization function in their code, which sets the property list parameter string to a custom data structure containing the sub-VFDs. The splitter VFD, for example, forwards data to two sub-VFDs: the read-write VFD and the write-only VFD. This VFD requires users to pass the identifiers of the already-initialized sub-VFDs using a custom \texttt{H5Pset\_fapl\_splitter} function. This approach, however, is not compatible with transparent initialization through environment variables, limiting portability.
+    \item Leverage the singleton nature of VFDs and create a custom initialization function that is called at the start of \texttt{open()}. A function-scoped static boolean variable can be used to ensure the initialization happens only once in the lifetime of the VFD, since \texttt{open()} will likely be called numerous times. This function will parse the parameter string, which should contain all information needed to initialize the sub-VFDs, and recursively register the sub-VFDs using \texttt{H5Dregister()} and \texttt{H5Pset\_driver\_by*()}.
+\end{enumerate}
+There is no specific functionality in HDF5 to initialize multiple VFDs at the same time -- it is the responsibility of a pass-through VFD developer to initialize any future VFDs it may depend on.
 
-After initialization, I/O operations (e.g., dataset reads and writes) can be performed. Write operations are typically executed using preorder traversal (left-to-right for lists). For EX1, compression is first applied to the data, then encryption, and then persistent storage. EX2 is similar. Reads are typically executed using postorder traversal (right-to-left for lists). For EX1, data is first read from the PFS, decrypted, and then decompressed. In EX2, the replication VOL decides one of the three destinations (PFS, S3, or DAOS) to read data from, reads the data from that destination and then goes for decompression. In practice, these traversals are executed using recursion, where the first VOL registered is the root of the recursion. In EX1 and EX2, the root is the compress VOL. Pseudocode for the write and read operations for the compress VOL are depicted below in Listing~\ref{lst:compress-vol}. For writes, the input buffers stored in \texttt{buf} will be compressed into a new set of buffers \texttt{compressed}. The maximum size a compressed buffer can be is assumed to be the size of the original data, which is calculated using a custom \texttt{get\_data\_size} function. The compressed data is then forwarded to the next VOL using \texttt{H5VLdataset\_write()}. Reads are similar, except the compressed data is first read using the next vol with \texttt{H5VLdataset\_read()} and then decompressed into \texttt{buf}.
+After initialization, I/O operations (e.g., dataset reads and writes) can be performed. Open will allocate a VFD-specific file struct, which inherits from the \texttt{H5FD\_t} struct and is passed to subsequent \texttt{read()} and \texttt{write()} calls. This includes information such as current file offset, file path, and system-specific connection information (e.g., POSIX file descriptor for a PFS). Write operations are typically executed using preorder traversal (left-to-right). Reads are typically executed using postorder traversal (right-to-left). In practice, these traversals are executed using recursion, where the first VFD registered is the root of the recursion. VFDs can internally call \texttt{H5FD_read()} and \texttt{H5FD_write()} in their custom \texttt{read()} and \texttt{write()} functions to perform I/O using the next VFDs in the DAG of VFDs.
 
-\begin{listing}[!ht]
-\centering
-\caption{Compression pass-through VOL code example.}
-\label{lst:compress-vol}
-\begin{minted}[linenos]{C}
-\end{minted}
-\end{listing}
+\subsubsection{Introspecting VFDs}
 
-\subsubsection{Introspecting VOLs}
+Various information can be queried from a VFD. \texttt{H5FDquery()} can be used to query the capabilities of a VFD-specific file structs and internally calls the \texttt{query()} callback. There are many capabilities, defined in \texttt{H5FDpublic.h}. One example is \texttt{H5FD\_FEAT\_POSIX\_COMPAT\_HANDLE}, which indicates that the return value of \texttt{get\_handle()} is an integer file descriptor compatible with POSIX I/O calls. The \texttt{ctl} callback allows for custom queries on file structs to be defined by the VFD developer using opcodes. On example opcode is \texttt{H5FD\_CTL\_GET\_MPI\_RANK\_OPCODE}, which gets the MPI rank of a file struct.
 
-The introspection API provided by VOLs (\texttt{H5VL\_introspect\_class\_t}) provides several abilities to query properties of the VOL. \texttt{get\_conn\_cls} provides the ability to locate the class struct pointer for a VOL. The capability flags can be queried with \texttt{get\_cap\_flags}. Lastly, the \texttt{opt\_query} function allows for determining whether or not optional operations are supported by this VOL connector, such as a particular method in the \texttt{H5VL\_attr\_class\_t} struct. This is typically more fine-grained than the capability flag query. In addition, the \texttt{H5VL\_info\_class\_t} provides the ability to query the VOL's specific info struct, if the VOL defines one. The function \texttt{from\_str} allows the info struct to be converted into a human-readable string.
-
-\subsubsection{Source files for \texttt{H5VL} developers}
+\subsubsection{Source files for \texttt{H5FD} developers}
 
 \begin{table}[!ht]
 \begin{tabular}{||c|l||}
@@ -569,21 +562,23 @@ The introspection API provided by VOLs (\texttt{H5VL\_introspect\_class\_t}) pro
 \textbf{Source File} & \textbf{Description} \\  [0.5ex] 
 \hline\hline
 \texttt{H5FDpublic.h} & Public APIs for VFD registration and introspection \\
-\texttt{H5VLconnector.h} & Public structs and APIs for VOL developers \\
-\texttt{H5VLconnector\_passthru.h} & Public APIs for pass-through VOL developers \\
-\texttt{H5FDpkg.h} & Internal APIs for VOL registration \\
-\texttt{H5FDprivate.h} & Internal APIs for VOL calls \\
-\texttt{H5FDmodule.h} & Internal macros for VOLs and documentation \\
-\texttt{H5FD.c} & Implementation of H5VLpublic.h \\
-\texttt{H5FDcallback.c} & Implementation of H5VLconnector.h and H5VLconnector\_passthru.h \\
-\texttt{H5FDint.c} & Implementation of initialization functions in H5VLpkg.h \\
-\texttt{H5FDdyn\_ops.c} & Implementation of optional functions in H5VLpkg.h \\
+\texttt{H5FDdevelop.h} & Public structs and APIs for VOL developers \\
+\texttt{H5FDpkg.h} & Internal APIs for VFD registration \\
+\texttt{H5FDprivate.h} & Internal APIs for VFD callbacks \\
+\texttt{H5FDdrvr_module.h.h} & Internal macros for VFD driver package \\
+\texttt{H5FDmodule.h} & Internal macros for VFD pacakge \\
+\texttt{H5FD.c} & Implementation of H5FDdevelop.h \\
+\texttt{H5FDint.c} & Implementation of callback functions in H5FDprivate.h \\
 \texttt{H5FDtest.c} & Internal helpers for environment variable checks \\
+\texttt{H5Fdeprec.c} & Implementation of deprecated VFD APIs \\
+\texttt{H5FDperform.c} & Implementation of APIs for initializing VFDs safely \\
+\texttt{H5FDspace.c} & Space allocation routines for the VFD code \\
 \hline
 \end{tabular}
 %\caption{}
-\label{table:VOL_src_files}
+\label{table:VFD_src_files}
 \end{table}
+% \end{comment}
 
 
 % \subsection{On-Disk Indexes (\texttt{H5[B,B2,EA,FA]})}
@@ -604,7 +599,6 @@ The introspection API provided by VOLs (\texttt{H5VL\_introspect\_class\_t}) pro
 %     \item Global heaps
 %     \item Fractal heaps
 % \end{itemize}
-\end{comment}
 
 \subsection{File Objects (\texttt{H5[O,SM]})}
 
